@@ -36,6 +36,9 @@ input[type=text]{width:100%;background:#262d4a;border:0;border-radius:12px;paddi
 .q{display:flex;gap:12px;align-items:center}.num{font-size:22px;font-weight:700;color:var(--acc);min-width:34px}
 .th{width:56px;height:56px;border-radius:12px;background:#262d4a center/cover;flex:none}.q .t{flex:1;min-width:0}.q b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sheetw{animation:up .35s both}.pv{width:120px;height:170px;margin:0 auto 10px;border-radius:4px;background:#262d4a center/cover;box-shadow:0 6px 18px #0008}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px}.strip .th{width:52px;height:52px;border:2px solid transparent;opacity:.55;transition:.2s}.strip .th.sel{border-color:var(--acc);opacity:1;transform:scale(1.06)}
+.paper{margin:0 auto 8px;position:relative;border-radius:3px;box-shadow:0 8px 22px #000a;overflow:hidden;transition:all .4s}.paper .im{position:absolute;inset:2%;background:center/contain no-repeat;filter:url(#pf);transition:filter .2s}
+.paper .gl{position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.6) 48%,transparent 60%);pointer-events:none;transition:opacity .4s}
 .hide{display:none}.mut{color:var(--mut);font-size:13px}.ca{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
 .empty{text-align:center;color:var(--mut);padding:18px}.empty span{font-size:34px;display:block;animation:fl 2.4s infinite ease-in-out}@keyframes fl{50%{transform:translateY(-6px)}}
 </style></head><body>
@@ -45,7 +48,8 @@ input[type=text]{width:100%;background:#262d4a;border:0;border-radius:12px;paddi
 <div class="tabs"><button data-t="q" class="on">Очередь</button><button data-t="s">Настройки</button><button data-t="c">Соадмины</button></div>
 
 <div id="tq"><div id="ql"></div><div class="card sheetw hide" id="ord">
-<div class="pv" id="opv"></div><div class="big" id="oti"></div><div class="sub" id="ofn"></div>
+<svg width="0" height="0" style="position:absolute"><filter id="pf" color-interpolation-filters="sRGB"><feColorMatrix id="fs" type="saturate" values="1"/><feComponentTransfer id="fc"><feFuncR type="gamma" exponent="1"/><feFuncG type="gamma" exponent="1"/><feFuncB type="gamma" exponent="1"/></feComponentTransfer><feComponentTransfer id="fl"><feFuncR type="linear" slope="1" intercept="0"/><feFuncG type="linear" slope="1" intercept="0"/><feFuncB type="linear" slope="1" intercept="0"/></feComponentTransfer></filter></svg>
+<div class="strip" id="ostrip"></div><div class="paper" id="opp"><div class="im" id="opv"></div><div class="gl" id="ogl"></div></div><div class="sub" id="oinfo"></div><div class="big" id="oti"></div><div class="sub" id="ofn"></div>
 <div id="ctl"></div><button class="go" id="pgo">🖨 Отправить на печать</button><div class="row"><button class="bad" id="prj">❌ Отклонить</button><button id="pcl">Закрыть</button></div></div>
 <div id="hl"></div></div>
 <div id="ts" class="hide"><div class="card"><div id="dctl"></div><div class="mut">Это настройки по умолчанию. Сохраняются при печати.</div></div></div>
@@ -77,11 +81,22 @@ function renderQ(){const q=S.q;$("ql").innerHTML=q.length?q.map((o,i)=>'<div cla
  document.querySelectorAll(".th").forEach(async e=>{const u=await pic(e.dataset.f);if(u)e.style.backgroundImage="url("+u+")"});
  document.querySelectorAll(".q").forEach(e=>e.onclick=()=>openOrd(e.dataset.o));
  $("hl").innerHTML=S.h.length?'<div class="mut" style="margin:8px 4px">Недавно</div>'+S.h.map(h=>'<div class="mut" style="padding:3px 4px">'+(h.ok?"✅":"⚠️")+" #"+h.o+" · "+h.t+"</div>").join(""):""}
+const MP={plain:[.85,.92,"#efeee6",0],matte:[.95,.97,"#f7f6f0",0],glossy:[1.12,1.08,"#fff",.9],semi:[1.06,1.04,"#fdfdfb",.4],driver:[1,1,"#fff",0]};
+const PS={a4:[210,297],a5:[148,210],b5:[176,250],letter:[216,279],"10x15":[100,150],"13x18":[130,180]};let sel=0;
+function prev(){const[sat,ct,pc,gl]=MP[dr.m]||MP.driver,[w,h]=PS[dr.p]||PS.a4,H=Math.min(250,320*h/w),W=H*w/h;
+ const p=$("opp");p.style.width=W+"px";p.style.height=H+"px";p.style.background=pc;$("fs").setAttribute("values",sat);
+ document.querySelectorAll("#fc>*").forEach(f=>f.setAttribute("exponent",1-dr.b/200));
+ document.querySelectorAll("#fl>*").forEach(f=>{f.setAttribute("slope",ct);f.setAttribute("intercept",.5-.5*ct)});
+ $("opv").style.backgroundSize=dr.s?"contain":"cover";$("ogl").style.opacity=gl;
+ $("oinfo").textContent=PAPERS[dr.p]+" · "+MEDIA[dr.m]+" · яркость "+dr.b+"% · так примерно выйдет на бумаге"}
+async function showSel(){const u=cur&&await pic(cur.f[sel]);$("opv").style.backgroundImage=u?"url("+u+")":""}
 async function openOrd(id){const o=S.q.find(x=>x.o===id);if(!o){cur=null;$("ord").classList.add("hide");return}
- if(!cur||cur.o!==id){cur=o;dr={...S.d,c:1}}
- $("ord").classList.remove("hide");$("oti").textContent=o.t||"Заказ";$("ofn").textContent="#"+o.o+" · файлов: "+o.n;
- $("ctl").innerHTML=controls(dr,"o");bind(dr,"o",()=>{$("opv").style.filter=filt(dr.b)});
- const u=await pic(o.f[0]);$("opv").style.backgroundImage=u?"url("+u+")":"";$("opv").style.filter=filt(dr.b);$("ord").scrollIntoView({behavior:"smooth"})}
+ if(!cur||cur.o!==id){cur=o;dr={...S.d,c:1};sel=0}
+ $("ord").classList.remove("hide");$("oti").textContent=o.t||"Заказ";$("ofn").textContent="#"+o.o+" · файлов: "+o.n+(o.f.length<o.n?" (превью есть у "+o.f.length+")":"");
+ $("ostrip").innerHTML=o.f.map((x,i)=>'<div class="th'+(i==sel?" sel":"")+'" data-i="'+i+'"></div>').join("");
+ $("ostrip").querySelectorAll(".th").forEach(async e=>{const u=await pic(o.f[+e.dataset.i]);if(u)e.style.backgroundImage="url("+u+")";
+  e.onclick=()=>{sel=+e.dataset.i;$("ostrip").querySelectorAll(".th").forEach(x=>x.classList.toggle("sel",x===e));showSel()}});
+ $("ctl").innerHTML=controls(dr,"o");bind(dr,"o",prev);prev();showSel();$("ord").scrollIntoView({behavior:"smooth"})}
 $("pgo").onclick=()=>{if(cur)send({a:"print",o:cur.o,q:dr.q,s:dr.s,c:dr.c,b:dr.b,p:dr.p,m:dr.m})};
 $("prj").onclick=()=>{if(cur)send({a:"reject",o:cur.o})};$("pcl").onclick=()=>{cur=null;$("ord").classList.add("hide")};
 let dd=null;function renderS(){if(dd)return;dd={...S.d,c:1};$("dctl").innerHTML=controls(dd,"d").replace(/<label>Копий[\s\S]*$/,"");bind(dd,"d")}
