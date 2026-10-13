@@ -36,9 +36,10 @@ input[type=text]{width:100%;background:#262d4a;border:0;border-radius:12px;paddi
 .q{display:flex;gap:12px;align-items:center}.num{font-size:22px;font-weight:700;color:var(--acc);min-width:34px}
 .th{width:56px;height:56px;border-radius:12px;background:#262d4a center/cover;flex:none}.q .t{flex:1;min-width:0}.q b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sheetw{animation:up .35s both}.pv{width:120px;height:170px;margin:0 auto 10px;border-radius:4px;background:#262d4a center/cover;box-shadow:0 6px 18px #0008}
-.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px}.strip .th{width:52px;height:52px;border:2px solid transparent;opacity:.55;transition:.2s}.strip .th.sel{border-color:var(--acc);opacity:1;transform:scale(1.06)}
+.strip{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;touch-action:pan-x;display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px}.strip .th{width:52px;height:52px;border:2px solid transparent;opacity:.55;transition:.2s}.strip .th.sel{border-color:var(--acc);opacity:1;transform:scale(1.06)}
 .paper{margin:0 auto 8px;position:relative;border-radius:3px;box-shadow:0 8px 22px #000a;overflow:hidden;transition:all .4s}.paper .im{position:absolute;inset:2%;background:center/contain no-repeat;filter:url(#pf);transition:filter .2s}
 .paper .gl{position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.6) 48%,transparent 60%);pointer-events:none;transition:opacity .4s}
+.ov{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 40px}.ov .back{position:sticky;top:0;z-index:2;margin-bottom:8px}.nav{display:flex;align-items:center;gap:8px;margin:0 0 10px}.nav button{width:52px;font-size:20px}.nav .sub{flex:1}
 .hide{display:none}.mut{color:var(--mut);font-size:13px}.ca{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
 .empty{text-align:center;color:var(--mut);padding:18px}.empty span{font-size:34px;display:block;animation:fl 2.4s infinite ease-in-out}@keyframes fl{50%{transform:translateY(-6px)}}
 </style></head><body>
@@ -47,9 +48,9 @@ input[type=text]{width:100%;background:#262d4a;border:0;border-radius:12px;paddi
 <div class="big" id="pt">Ожидает заказов</div><div class="bar"><i id="pb"></i></div><div class="sub" id="ps"></div></div>
 <div class="tabs"><button data-t="q" class="on">Очередь</button><button data-t="s">Настройки</button><button data-t="c">Соадмины</button></div>
 
-<div id="tq"><div id="ql"></div><div class="card sheetw hide" id="ord">
+<div id="tq"><div id="ql"></div><div class="ov sheetw hide" id="ord"><button class="back" id="pbk">‹ Назад в очередь</button>
 <svg width="0" height="0" style="position:absolute"><filter id="pf" color-interpolation-filters="sRGB"><feColorMatrix id="fs" type="saturate" values="1"/><feComponentTransfer id="fc"><feFuncR type="gamma" exponent="1"/><feFuncG type="gamma" exponent="1"/><feFuncB type="gamma" exponent="1"/></feComponentTransfer><feComponentTransfer id="fl"><feFuncR type="linear" slope="1" intercept="0"/><feFuncG type="linear" slope="1" intercept="0"/><feFuncB type="linear" slope="1" intercept="0"/></feComponentTransfer></filter></svg>
-<div class="strip" id="ostrip"></div><div class="paper" id="opp"><div class="im" id="opv"></div><div class="gl" id="ogl"></div></div><div class="sub" id="oinfo"></div><div class="big" id="oti"></div><div class="sub" id="ofn"></div>
+<div class="strip" id="ostrip"></div><div class="paper" id="opp"><div class="im" id="opv"></div><div class="gl" id="ogl"></div></div><div class="nav"><button id="pprev">‹</button><div class="sub" id="pcnt"></div><button id="pnext">›</button></div><div class="sub" id="oinfo" style="margin-bottom:10px"></div><div class="big" id="oti"></div><div class="sub" id="ofn"></div>
 <div id="ctl"></div><button class="go" id="pgo">🖨 Отправить на печать</button><div class="row"><button class="bad" id="prj">❌ Отклонить</button><button id="pcl">Закрыть</button></div></div>
 <div id="hl"></div></div>
 <div id="ts" class="hide"><div class="card"><div id="dctl"></div><div class="mut">Это настройки по умолчанию. Сохраняются при печати.</div></div></div>
@@ -63,9 +64,8 @@ let TK=qs.get("tk")||(/tk=([^&]+)/.exec(location.hash)||[])[1]||localStorage.get
 try{if(TK)localStorage.setItem("tk",TK);if(qs.get("tk"))history.replaceState(null,"",location.pathname)}catch(e){}
 const api="https://api.telegram.org/bot"+TK,QL={low:"Минимальное",medium:"Среднее",high:"Высокое"};
 const PAPERS={a4:"A4",a5:"A5",b5:"B5",letter:"Letter","10x15":"10×15","13x18":"13×18"},MEDIA={plain:"Обычная",matte:"Матовая",glossy:"Глянцевая",semi:"Полуглянец",driver:"Как в драйвере"};
-let S=null,cur=null,dr=null,tab="q";const img={};
-async function pic(fid){if(!fid||!TK)return"";if(img[fid]!==undefined)return img[fid];img[fid]="";
- try{const r=await(await fetch(api+"/getFile?file_id="+encodeURIComponent(fid))).json();img[fid]="https://api.telegram.org/file/bot"+TK+"/"+r.result.file_path}catch(e){}return img[fid]}
+let lastK="",S=null,cur=null,dr=null,tab="q";const img={};
+function pic(fid){if(!fid||!TK)return Promise.resolve("");return img[fid]||(img[fid]=(async()=>{try{const r=await(await fetch(api+"/getFile?file_id="+encodeURIComponent(fid))).json();return"https://api.telegram.org/file/bot"+TK+"/"+r.result.file_path}catch(e){delete img[fid];return""}})())}
 function seg(id,opts,val,on){return'<div class="row" id="'+id+'">'+Object.entries(opts).map(([k,v])=>'<button data-k="'+k+'" class="'+(k==val?"on":"")+'">'+v+'</button>').join("")+'</div>'}
 function controls(d,pre){return'<label>Качество</label>'+seg(pre+"q",QL,d.q)+'<label>Режим листа</label>'+seg(pre+"s",{1:"Целиком",0:"На весь лист"},d.s?1:0)+
 '<label>Размер бумаги</label>'+seg(pre+"p",PAPERS,d.p)+'<label>Тип бумаги</label>'+seg(pre+"m",MEDIA,d.m)+
@@ -89,16 +89,20 @@ function prev(){const[sat,ct,pc,gl]=MP[dr.m]||MP.driver,[w,h]=PS[dr.p]||PS.a4,H=
  document.querySelectorAll("#fl>*").forEach(f=>{f.setAttribute("slope",ct);f.setAttribute("intercept",.5-.5*ct)});
  $("opv").style.backgroundSize=dr.s?"contain":"cover";$("ogl").style.opacity=gl;
  $("oinfo").textContent=PAPERS[dr.p]+" · "+MEDIA[dr.m]+" · яркость "+dr.b+"% · так примерно выйдет на бумаге"}
-async function showSel(){const u=cur&&await pic(cur.f[sel]);$("opv").style.backgroundImage=u?"url("+u+")":""}
+async function showSel(){$("pcnt").textContent=cur&&cur.f.length?"Фото "+(sel+1)+" из "+cur.f.length:"Нет превью";const u=cur&&await pic(cur.f[sel]);$("opv").style.backgroundImage=u?"url("+u+")":""}
 async function openOrd(id){const o=S.q.find(x=>x.o===id);if(!o){cur=null;$("ord").classList.add("hide");return}
  if(!cur||cur.o!==id){cur=o;dr={...S.d,c:1};sel=0}
  $("ord").classList.remove("hide");$("oti").textContent=o.t||"Заказ";$("ofn").textContent="#"+o.o+" · файлов: "+o.n+(o.f.length<o.n?" (превью есть у "+o.f.length+")":"");
  $("ostrip").innerHTML=o.f.map((x,i)=>'<div class="th'+(i==sel?" sel":"")+'" data-i="'+i+'"></div>').join("");
  $("ostrip").querySelectorAll(".th").forEach(async e=>{const u=await pic(o.f[+e.dataset.i]);if(u)e.style.backgroundImage="url("+u+")";
   e.onclick=()=>{sel=+e.dataset.i;$("ostrip").querySelectorAll(".th").forEach(x=>x.classList.toggle("sel",x===e));showSel()}});
- $("ctl").innerHTML=controls(dr,"o");bind(dr,"o",prev);prev();showSel();$("ord").scrollIntoView({behavior:"smooth"})}
+ $("ctl").innerHTML=controls(dr,"o");bind(dr,"o",prev);prev();showSel();$("ord").scrollTop=0;document.body.style.overflow="hidden";try{tg.BackButton.show();tg.BackButton.onClick(closeOrd)}catch(e){}}
 $("pgo").onclick=()=>{if(cur)send({a:"print",o:cur.o,q:dr.q,s:dr.s,c:dr.c,b:dr.b,p:dr.p,m:dr.m})};
-$("prj").onclick=()=>{if(cur)send({a:"reject",o:cur.o})};$("pcl").onclick=()=>{cur=null;$("ord").classList.add("hide")};
+$("prj").onclick=()=>{if(cur)send({a:"reject",o:cur.o})};function closeOrd(){cur=null;$("ord").classList.add("hide");document.body.style.overflow="";try{tg.BackButton.hide();tg.BackButton.offClick(closeOrd)}catch(e){}}
+$("pcl").onclick=$("pbk").onclick=closeOrd;
+function go(d){if(!cur||!cur.f.length)return;sel=(sel+d+cur.f.length)%cur.f.length;$("ostrip").querySelectorAll(".th").forEach((x,i)=>x.classList.toggle("sel",i===sel));showSel()}
+$("pprev").onclick=()=>go(-1);$("pnext").onclick=()=>go(1);let tx=null;
+$("opp").ontouchstart=e=>{tx=e.touches[0].clientX};$("opp").ontouchend=e=>{if(tx!==null){const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>40)go(d<0?1:-1)}tx=null};
 let dd=null;function renderS(){if(dd)return;dd={...S.d,c:1};$("dctl").innerHTML=controls(dd,"d").replace(/<label>Копий[\s\S]*$/,"");bind(dd,"d")}
 function renderC(){if(!$("cl"))return;$("cl").innerHTML=S.ca.length?S.ca.map(i=>'<div class="ca"><span>👤 '+i+'</span><button class="bad" data-i="'+i+'">Убрать</button></div>').join(""):'<div class="mut" style="padding:6px 0">Пока никого</div>';
  $("cl").querySelectorAll("button").forEach(b=>b.onclick=()=>send({a:"coadmin",op:"del",id:+b.dataset.i}))}
@@ -117,7 +121,8 @@ async function tick(){const n=S&&S.now,pr=$("pr"),sh=$("sheet");pr.className="pr
  }else lastFid="";
  sh.style.transform="translateY("+y+"px)";$("pb").style.width=p*100+"%";$("pt").textContent=t;$("ps").textContent=s;$("dot").classList.toggle("on",!!S)}
 async function poll(){try{const r=await(await fetch(api+"/getChat?chat_id="+AD)).json();const m=r.result&&r.result.pinned_message;
- if(m){S=JSON.parse(m.text.split("\n")[1]);renderQ();renderC();renderS();if(cur)$("ord").classList.contains("hide")||0}}catch(e){}tick()}
+ if(m){S=JSON.parse(m.text.split("\n")[1]);const k=JSON.stringify([S.q,S.h,S.ca]);
+  if(k!==lastK){lastK=k;renderQ();renderC()}renderS();if(cur&&!S.q.find(x=>x.o===cur.o))closeOrd()}}catch(e){}tick()}
 if(!TK||!AD)$("pt").textContent="Открой приложение кнопкой «🖨 Админ-панель» в чате с ботом";
 poll();setInterval(poll,2500);setInterval(()=>S&&tick(),1000);
 </script></body></html>
