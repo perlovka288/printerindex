@@ -78,6 +78,7 @@
   .group h2 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
   .hint { margin: 8px 0 0; color: var(--hint); font-size: 13px; }
 
+  .segmented.two { grid-template-columns: repeat(2, 1fr); }
   .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: var(--radius); background: var(--soft); }
   .seg { padding: 9px 4px 8px; border-radius: 11px; text-align: center; line-height: 1.2; transition: background .15s, box-shadow .15s; }
   .seg[aria-checked="true"] { background: var(--bg); box-shadow: 0 1px 3px rgba(0,0,0,.18), 0 0 0 1.5px var(--accent) inset; }
@@ -88,6 +89,7 @@
   .drops i.on { background: var(--hint); }
   .seg[aria-checked="true"] .drops i.on { background: var(--accent); }
 
+  .seg .pg { display: block; margin: 0 auto 6px; }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
   .row h2 { margin: 0; }
   .switch { position: relative; flex: 0 0 auto; width: 51px; height: 31px; border-radius: 99px; background: color-mix(in srgb, var(--text) 22%, transparent); transition: background .18s; }
@@ -147,14 +149,10 @@
       <p id="quality-hint" class="hint"></p>
     </section>
 
-    <section class="group">
-      <div class="row">
-        <div>
-          <h2 id="smart-h">Умные поля</h2>
-          <p id="smart-hint" class="hint" style="margin-top:2px"></p>
-        </div>
-        <button id="smart" class="switch" role="switch" aria-labelledby="smart-h" aria-checked="true"></button>
-      </div>
+    <section class="group" aria-labelledby="mode-h">
+      <h2 id="mode-h">Как разместить на листе</h2>
+      <div id="mode" class="segmented two" role="radiogroup" aria-labelledby="mode-h"></div>
+      <p id="smart-hint" class="hint"></p>
     </section>
 
     <section class="group">
@@ -229,19 +227,18 @@
   const saveToken = (v) => { cloudSet(v); localSet(v); };
 
   async function findToken() {
-    // 1) из адреса кнопки: фрагмент (#tk=...) не уходит ни на какой сервер
-    try {
-      const m = /(?:^#|&)tk=([^&]+)/.exec(location.hash);
-      if (m && TOKEN_RE.test(decodeURIComponent(m[1]))) {
-        const t = decodeURIComponent(m[1]); saveToken(t);
-        // убираем токен из адресной строки страницы
-        try {
-          const rest = location.hash.slice(1).split("&").filter((x) => x && x.indexOf("tk=") !== 0).join("&");
-          history.replaceState(null, "", location.pathname + location.search + (rest ? "#" + rest : ""));
-        } catch (e) {}
-        return t;
-      }
-    } catch (e) {}
+    // 1) из адреса кнопки: ?tk=... или #tk=...
+    let found = qs.get("tk") || "";
+    if (!found) { const m = /(?:^#|&)tk=([^&]+)/.exec(location.hash); if (m) { try { found = decodeURIComponent(m[1]); } catch (e) {} } }
+    if (TOKEN_RE.test(found)) {
+      saveToken(found);
+      try {   // убираем токен из адресной строки страницы
+        const sp = new URLSearchParams(location.search); sp.delete("tk");
+        const rest = location.hash.slice(1).split("&").filter((x) => x && x.indexOf("tk=") !== 0).join("&");
+        history.replaceState(null, "", location.pathname + (sp.toString() ? "?" + sp : "") + (rest ? "#" + rest : ""));
+      } catch (e) {}
+      return found;
+    }
     // 2) из хранилища Mini App (облако Telegram / локально)
     const stored = (await cloudGet()) || localGet();
     return stored && TOKEN_RE.test(stored) ? stored : "";
@@ -426,11 +423,26 @@
     $("quality").querySelectorAll(".seg").forEach((b) => b.onclick = () => { state.quality = b.dataset.k; haptic(); renderQuality(); renderSummary(); });
     $("quality-hint").textContent = QUALITY.find((q) => q.key === state.quality).hint;
   }
+  const PAGE = (inner) => '<svg class="pg" width="30" height="42" viewBox="0 0 30 42" aria-hidden="true"><rect x=".75" y=".75" width="28.5" height="40.5" rx="2" fill="#fff" stroke="currentColor" stroke-opacity=".35" stroke-width="1.5"/>' + inner + "</svg>";
+  const MODES = [
+    { smart: true,  title: "Целиком",      sub: "всё фото видно, тонкие поля",
+      icon: PAGE('<rect x="4" y="12" width="22" height="18" rx="1" fill="#2481cc"/>') },
+    { smart: false, title: "На весь лист", sub: "по размеру кадра, края обрезаются",
+      icon: PAGE('<rect x="1.5" y="1.5" width="27" height="39" rx="1.5" fill="#2481cc"/>') },
+  ];
   function renderSmart() {
-    $("smart").setAttribute("aria-checked", state.smart);
+    $("mode").innerHTML = MODES.map((m) =>
+      '<button class="seg" role="radio" aria-checked="' + (m.smart === state.smart) + '" data-s="' + (m.smart ? 1 : 0) + '">' +
+      m.icon + "<b>" + m.title + "</b><small>" + m.sub + "</small></button>").join("");
+    $("mode").querySelectorAll(".seg").forEach((b) => b.onclick = () => {
+      const smart = b.dataset.s === "1";
+      if (smart === state.smart) return;
+      state.smart = smart; haptic(); renderSmart(); renderSummary();
+      if (lastImg && (kinds[state.file] === "p" || kinds[state.file] === "i")) loadPreview();
+    });
     $("smart-hint").textContent = state.smart
-      ? "Фото целиком, поля — минимальные. Размер подбирается под лист."
-      : "Фото заполняет весь лист, края могут обрезаться.";
+      ? "Фото помещается на лист целиком, пропорции сохраняются, поля — минимальные."
+      : "Фото растягивается на весь лист (как «Изображение по размеру кадра» в Windows), лишнее по краям обрезается.";
   }
   function renderCopies() {
     $("copies").textContent = state.copies;
@@ -438,14 +450,14 @@
   }
   function renderSummary() {
     const q = QUALITY.find((x) => x.key === state.quality);
-    $("summary").textContent = q.title + " качество · " + (state.smart ? "умные поля" : "без полей") + " · копий: " + state.copies + " · " + filesWord(total);
+    $("summary").textContent = q.title + " качество · " + (state.smart ? "целиком" : "на весь лист") + " · копий: " + state.copies + " · " + filesWord(total);
   }
-  $("smart").onclick = () => { state.smart = !state.smart; haptic(); renderSmart(); renderSummary(); if (lastImg && (kinds[state.file] === "p" || kinds[state.file] === "i")) loadPreview(); };
   $("minus").onclick = () => { if (state.copies > 1) { state.copies--; haptic(); renderCopies(); renderSummary(); } };
   $("plus").onclick = () => { if (state.copies < 99) { state.copies++; haptic(); renderCopies(); renderSummary(); } };
 
   /* ---------- отправка боту: Telegram.WebApp.sendData ---------- */
   function sendToBot(payload, onFail) {
+    if (!tg || typeof tg.sendData !== "function") { onFail("Открой страницу из Telegram, кнопкой «Настроить печать» в чате с ботом."); return; }
     try { tg.sendData(JSON.stringify(payload)); }
     catch (e) { onFail("Не получилось отправить: " + e.message); return; }
     // Если всё в порядке, Telegram закрывает Mini App сразу. Если окно живо через 2 с - что-то не так.
@@ -474,9 +486,6 @@
   }
 
   async function init() {
-    if (!tg || !tg.initData) {
-      return showState("<h2>Открой из Telegram</h2><p>Эта страница работает только как Mini App. Нажми «Настроить печать» на клавиатуре в чате с ботом.</p>");
-    }
     if (!orderId) {
       return showState("<h2>Нет номера заказа</h2><p>Открой заказ кнопкой «Настроить печать» на клавиатуре в чате с ботом.</p>");
     }
