@@ -111,10 +111,11 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{tab=b.datase
 if(qs.get("r")==="co"){document.querySelector("[data-t=c]").remove();$("tc").remove()}
 /* принтер: анимация */
 const EST=30;let lastFid="";
-async function tick(){const n=S&&S.now,pr=$("pr"),sh=$("sheet");pr.className="pr";let p=0,t="Ожидает заказов",s="",y=-250;
+let mp=0,mo="";
+async function tick(){const n=S&&S.now,pr=$("pr"),sh=$("sheet");pr.className="pr";if(!n||n.o!==mo){mp=0;mo=n?n.o:""}let p=0,t="Ожидает заказов",s="",y=-250;
  if(n){const P=Math.max(1,n.P||1);
   if(n.st==="dl"){t="Скачиваю файлы…";pr.classList.add("busy")}
-  else if(n.st==="wait"||n.st==="print"){pr.classList.add("busy");const el=n.t0?Math.max(0,Date.now()/1e3-n.t0):0,pg=Math.min(P,Math.floor(el/EST)+1),fr=Math.min(.96,(el%EST)/EST);p=Math.min(.97,((pg-1)+fr)/P);y=-250+fr*250;t="Печатаю заказ #"+n.o;s="Страница "+pg+" из "+P+" · "+(n.t||"")}
+  else if(n.st==="wait"||n.st==="print"){pr.classList.add("busy");const el=n.t0?Math.max(0,Date.now()/1e3-n.t0):0;p=n.pr!=null?n.pr:Math.min(.9,el/(P*90));p=Math.max(p,mp);mp=p;const x=Math.min(.999,p)*P,pg=Math.min(P,Math.floor(x)+1),fr=x-Math.floor(x);y=-250+fr*250;t="Печатаю заказ #"+n.o;s="Страница "+pg+" из "+P+" · "+Math.round(p*100)+"%"}
   else if(n.st==="done"){pr.classList.add("done");p=1;y=-20;t="✅ Готово! Заказ #"+n.o}
   else{pr.classList.add("err");t="⚠️ Ошибка печати"}
   if(n.f&&n.f!==lastFid){lastFid=n.f;const u=await pic(n.f);sh.classList.toggle("bl",!u);sh.style.backgroundImage=u?"url("+u+")":""}
