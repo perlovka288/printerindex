@@ -1,506 +1,108 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="color-scheme" content="light dark">
-<meta name="referrer" content="no-referrer">
-<title>Настройки печати</title>
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Админ-панель</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root {
-    --bg: var(--tg-theme-bg-color, #ffffff);
-    --text: var(--tg-theme-text-color, #16181b);
-    --hint: var(--tg-theme-hint-color, #707579);
-    --accent: var(--tg-theme-button-color, #2481cc);
-    --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --desk: var(--tg-theme-secondary-bg-color, #eef0f3);
-    --line: color-mix(in srgb, var(--text) 13%, transparent);
-    --soft: color-mix(in srgb, var(--text) 6%, transparent);
-    --danger: #d8453f;
-    --warn: #b86e00;
-    --ok: #2e9d57;
-    --radius: 14px;
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: var(--tg-theme-bg-color, #17212b);
-      --text: var(--tg-theme-text-color, #f5f5f5);
-      --hint: var(--tg-theme-hint-color, #7d8b99);
-      --desk: var(--tg-theme-secondary-bg-color, #0e1621);
-      --warn: #e3a13a;
-    }
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 var(--font); }
-  body { min-height: 100vh; padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
-  button, input { font: inherit; color: inherit; }
-  button { cursor: pointer; border: 0; background: none; }
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .hidden { display: none !important; }
+:root{--bg:#0f1220;--card:#1a1f33;--ink:#eef0fa;--mut:#8b92b0;--acc:#6c8cff;--ok:#3ddc97;--bad:#ff6b7a;--r:18px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(120% 60% at 50% -10%,#232a4d,var(--bg));color:var(--ink);font:15px/1.4 system-ui,sans-serif;min-height:100vh;padding:14px 14px 90px}
+h1{font-size:20px;margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);transition:.3s}.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;animation:up .45s both}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{flex:1}
+button,.chip{font:inherit;color:var(--ink);background:#262d4a;border:0;border-radius:12px;padding:10px 12px;cursor:pointer;transition:.2s}
+button:active{transform:scale(.96)}.on{background:var(--acc)!important;color:#fff}
+.go{background:linear-gradient(90deg,#4f74ff,#8a5cff);width:100%;font-weight:600;padding:14px}.bad{background:#3a2430;color:var(--bad)}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}.row>*{flex:1 1 auto;text-align:center}
+label{color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+input[type=range]{width:100%;accent-color:var(--acc)}
+input[type=text]{width:100%;background:#262d4a;border:0;border-radius:12px;padding:11px;color:var(--ink);font:inherit}
+/* принтер */
+.pr{position:relative;height:220px;display:flex;justify-content:center;overflow:hidden}
+.body{position:absolute;top:10px;width:250px;height:96px;border-radius:22px;background:linear-gradient(#3a4268,#272d4b);z-index:3;box-shadow:0 10px 24px #0006}
+.body:before{content:"";position:absolute;left:24px;right:24px;bottom:22px;height:8px;border-radius:6px;background:#0a0c16}
+.led{position:absolute;right:20px;top:16px;width:9px;height:9px;border-radius:50%;background:var(--mut)}
+.busy .led{background:var(--acc);animation:bl .6s infinite alternate}.done .led{background:var(--ok)}.err .led{background:var(--bad)}
+@keyframes bl{to{opacity:.2}}
+.out{position:absolute;top:96px;width:200px;height:120px;overflow:hidden;z-index:2}
+.sheet{width:200px;height:260px;background:#fff center/cover;border-radius:3px;box-shadow:0 4px 14px #0008;transform:translateY(-250px);transition:transform 1.2s cubic-bezier(.3,.7,.2,1)}
+.sheet.bl{background-color:#e8eaf3}.busy .body{animation:vib .18s infinite}
+@keyframes vib{50%{transform:translateY(1px)}}
+.bar{height:6px;border-radius:6px;background:#262d4a;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),#a07bff);transition:width 1s linear}
+.big{text-align:center;font-weight:600}.sub{text-align:center;color:var(--mut);font-size:13px}
+/* очередь */
+.q{display:flex;gap:12px;align-items:center}.num{font-size:22px;font-weight:700;color:var(--acc);min-width:34px}
+.th{width:56px;height:56px;border-radius:12px;background:#262d4a center/cover;flex:none}.q .t{flex:1;min-width:0}.q b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheetw{animation:up .35s both}.pv{width:120px;height:170px;margin:0 auto 10px;border-radius:4px;background:#262d4a center/cover;box-shadow:0 6px 18px #0008}
+.hide{display:none}.mut{color:var(--mut);font-size:13px}.ca{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.empty{text-align:center;color:var(--mut);padding:18px}.empty span{font-size:34px;display:block;animation:fl 2.4s infinite ease-in-out}@keyframes fl{50%{transform:translateY(-6px)}}
+</style></head><body>
+<h1>🖨 Админ-панель <span id="dot" class="dot"></span></h1>
+<div class="card" id="pcard"><div class="pr" id="pr"><div class="body"><i class="led"></i></div><div class="out"><div class="sheet bl" id="sheet"></div></div></div>
+<div class="big" id="pt">Ожидает заказов</div><div class="bar"><i id="pb"></i></div><div class="sub" id="ps"></div></div>
+<div class="tabs"><button data-t="q" class="on">Очередь</button><button data-t="s">Настройки</button><button data-t="c">Соадмины</button></div>
 
-  header { padding: 14px 18px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  header h1 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
-  header p { margin: 2px 0 0; color: var(--hint); font-size: 13px; }
-  .reject { flex: 0 0 auto; margin: -4px -8px 0 0; padding: 8px 10px; border-radius: 10px; color: var(--danger); font-size: 14px; }
-
-  .desk { background: var(--desk); padding: 14px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .sheet {
-    position: relative; width: min(58vw, 236px); aspect-ratio: 210 / 297; background: #fff; overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0,0,0,.14), 0 14px 30px -12px rgba(0,0,0,.38);
-  }
-  .sheet canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .sheet.loading::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(100deg, transparent 30%, rgba(120,130,150,.2) 50%, transparent 70%);
-    background-size: 220% 100%; animation: shimmer 1.1s linear infinite;
-  }
-  @keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
-  .sheet-note { position: absolute; inset: 0; display: grid; place-content: center; gap: 6px; text-align: center; padding: 18px; color: #5a6068; font-size: 13px; background: #fff; }
-  .sheet-note svg { margin: 0 auto; }
-  .sheet-note b { color: #1d2024; font-size: 14px; word-break: break-word; }
-  .sheet-note button { margin: 6px auto 0; padding: 7px 14px; border-radius: 10px; background: #eef0f3; color: #1d2024; font-weight: 600; font-size: 13px; }
-  .sheet-size { font-size: 12px; color: var(--hint); font-variant-numeric: tabular-nums; }
-
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 26px; }
-  .chip { font-size: 12.5px; padding: 3px 10px; border-radius: 99px; background: var(--soft); font-variant-numeric: tabular-nums; }
-  .chip.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
-
-  .files { display: flex; gap: 8px; overflow-x: auto; width: 100%; padding: 2px 2px 4px; scrollbar-width: none; }
-  .files::-webkit-scrollbar { display: none; }
-  .file-tab { flex: 0 0 auto; padding: 7px 14px; border-radius: 10px; background: var(--bg); border: 1.5px solid transparent; font-size: 13px; white-space: nowrap; }
-  .file-tab[aria-selected="true"] { border-color: var(--accent); }
-
-  main { padding: 6px 18px 0; }
-  .group { padding: 16px 0; border-bottom: 1px solid var(--line); }
-  .group:last-child { border-bottom: 0; }
-  .group h2 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
-  .hint { margin: 8px 0 0; color: var(--hint); font-size: 13px; }
-
-  .segmented.two { grid-template-columns: repeat(2, 1fr); }
-  .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: var(--radius); background: var(--soft); }
-  .seg { padding: 9px 4px 8px; border-radius: 11px; text-align: center; line-height: 1.2; transition: background .15s, box-shadow .15s; }
-  .seg[aria-checked="true"] { background: var(--bg); box-shadow: 0 1px 3px rgba(0,0,0,.18), 0 0 0 1.5px var(--accent) inset; }
-  .seg b { display: block; font-size: 14px; font-weight: 600; }
-  .seg small { display: block; margin-top: 2px; color: var(--hint); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .drops { display: flex; justify-content: center; gap: 3px; margin-bottom: 5px; }
-  .drops i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
-  .drops i.on { background: var(--hint); }
-  .seg[aria-checked="true"] .drops i.on { background: var(--accent); }
-
-  .seg .pg { display: block; margin: 0 auto 6px; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-  .row h2 { margin: 0; }
-  .switch { position: relative; flex: 0 0 auto; width: 51px; height: 31px; border-radius: 99px; background: color-mix(in srgb, var(--text) 22%, transparent); transition: background .18s; }
-  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .18s; }
-  .switch[aria-checked="true"] { background: var(--ok); }
-  .switch[aria-checked="true"]::after { transform: translateX(20px); }
-
-  .stepper { display: inline-flex; align-items: center; background: var(--soft); border-radius: var(--radius); }
-  .stepper button { width: 46px; height: 40px; font-size: 22px; line-height: 1; border-radius: var(--radius); }
-  .stepper button:disabled { opacity: .3; cursor: default; }
-  .stepper output { min-width: 40px; text-align: center; font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
-
-  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 18px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--bg); border-top: 1px solid var(--line); }
-  .print { width: 100%; height: 56px; border-radius: 16px; background: var(--accent); color: var(--accent-text); font-size: 17px; font-weight: 650; display: flex; align-items: center; justify-content: center; transition: transform .1s, opacity .15s; }
-  .print:active:not(:disabled) { transform: scale(.985); }
-  .print:disabled { opacity: .55; cursor: default; }
-  .summary { margin: 0 0 8px; text-align: center; color: var(--hint); font-size: 12.5px; }
-
-  .toast { position: fixed; left: 16px; right: 16px; bottom: calc(124px + env(safe-area-inset-bottom, 0px)); padding: 12px 14px; border-radius: 12px; background: var(--danger); color: #fff; font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
-
-  .state { min-height: 100vh; padding: 24px; display: grid; place-content: center; gap: 10px; text-align: center; }
-  .state h2 { margin: 0; font-size: 20px; }
-  .state p { margin: 0 auto; color: var(--hint); max-width: 330px; }
-  .state input { width: min(100%, 330px); margin: 6px auto 0; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--soft); font-size: 15px; }
-  .state button { margin: 8px auto 0; padding: 11px 22px; border-radius: 12px; background: var(--soft); font-weight: 600; }
-  .state button.primary { background: var(--accent); color: var(--accent-text); }
-  .state .tick { width: 64px; height: 64px; margin: 0 auto 6px; border-radius: 50%; background: var(--ok); display: grid; place-content: center; }
-  .spinner { width: 28px; height: 28px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-</style>
-</head>
-<body>
-
-<div id="state" class="state"><div class="spinner" role="status" aria-label="Загрузка"></div></div>
-
-<div id="app" class="hidden">
-  <header>
-    <div>
-      <h1 id="title">Заказ</h1>
-      <p id="subtitle"></p>
-    </div>
-    <button id="reject" class="reject">Отклонить</button>
-  </header>
-
-  <section class="desk" aria-label="Предпросмотр">
-    <div id="files" class="files" role="tablist" aria-label="Файлы заказа"></div>
-    <div id="sheet" class="sheet"><canvas id="canvas" role="img" aria-label="Так фото будет расположено на листе А4"></canvas></div>
-    <div class="sheet-size">Лист А4 · 210 × 297 мм</div>
-    <div id="chips" class="chips" aria-live="polite"></div>
-  </section>
-
-  <main>
-    <section class="group" aria-labelledby="q-h">
-      <h2 id="q-h">Качество печати</h2>
-      <div id="quality" class="segmented" role="radiogroup" aria-labelledby="q-h"></div>
-      <p id="quality-hint" class="hint"></p>
-    </section>
-
-    <section class="group" aria-labelledby="mode-h">
-      <h2 id="mode-h">Как разместить на листе</h2>
-      <div id="mode" class="segmented two" role="radiogroup" aria-labelledby="mode-h"></div>
-      <p id="smart-hint" class="hint"></p>
-    </section>
-
-    <section class="group">
-      <div class="row">
-        <h2 id="copies-h">Копий</h2>
-        <div class="stepper" role="group" aria-labelledby="copies-h">
-          <button id="minus" aria-label="Меньше">−</button>
-          <output id="copies" aria-live="polite">1</output>
-          <button id="plus" aria-label="Больше">+</button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div class="bar">
-    <p id="summary" class="summary"></p>
-    <button id="print" class="print">Отправить на печать</button>
-  </div>
-</div>
+<div id="tq"><div id="ql"></div><div class="card sheetw hide" id="ord">
+<div class="pv" id="opv"></div><div class="big" id="oti"></div><div class="sub" id="ofn"></div>
+<div id="ctl"></div><button class="go" id="pgo">🖨 Отправить на печать</button><div class="row"><button class="bad" id="prj">❌ Отклонить</button><button id="pcl">Закрыть</button></div></div>
+<div id="hl"></div></div>
+<div id="ts" class="hide"><div class="card"><div id="dctl"></div><div class="mut">Это настройки по умолчанию. Сохраняются при печати.</div></div></div>
+<div id="tc" class="hide"><div class="card"><b>Соадмины</b><div class="mut" style="margin:4px 0 10px">Их заказы печатаются сразу, без твоего одобрения. Введи Telegram ID (узнать: бот @userinfobot).</div>
+<div id="cl"></div><input type="text" id="cid" inputmode="numeric" placeholder="Telegram ID, например 123456789"><button class="go" id="cadd" style="margin-top:10px">Добавить соадмина</button></div></div>
 
 <script>
-(() => {
-  "use strict";
-  const tg = window.Telegram && window.Telegram.WebApp;
-  if (tg) { tg.ready(); tg.expand(); try { tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } catch (e) {} }
-  const $ = (id) => document.getElementById(id);
-
-  /* Пресеты качества: те же ключи, что в bot.py (QUALITY_LEVELS) */
-  const QUALITY = [
-    { key: "low",    title: "Минимальное", dpi: 150, hint: "Черновик: быстро и экономно, для текста и проверки макета." },
-    { key: "medium", title: "Среднее",     dpi: 300, hint: "Стандарт: хороший баланс скорости, чернил и чёткости." },
-    { key: "high",   title: "Высокое",     dpi: 600, hint: "Максимум детализации для фото. Печатает дольше, чернил уходит больше." },
-  ];
-  const MARGIN_MM = 4.0;   // как MIN_MARGIN_MM в bot.py
-
-  /* ---------- данные заказа из адреса ---------- */
-  const qs = new URLSearchParams(location.search);
-  const orderId = qs.get("o") || "";
-  const kinds = (qs.get("k") || "").split("");
-  const fileIds = (qs.get("f") || "").split(".");
-  const total = Math.max(1, parseInt(qs.get("n"), 10) || kinds.length || 1);
-  const state = {
-    quality: QUALITY.some((q) => q.key === qs.get("q")) ? qs.get("q") : "medium",
-    smart: qs.get("s") !== "0",
-    copies: Math.min(99, Math.max(1, parseInt(qs.get("c"), 10) || 1)),
-    file: 0, sending: false, token: "",
-  };
-  const haptic = () => { try { tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged(); } catch (e) {} };
-
-  /* ---------- служебное ---------- */
-  const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const filesWord = (n) => n + (n % 10 === 1 && n % 100 !== 11 ? " файл" : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? " файла" : " файлов");
-  function showState(html) { $("app").classList.add("hidden"); const s = $("state"); s.classList.remove("hidden"); s.innerHTML = html; }
-  let toastTimer;
-  function toast(text) {
-    let t = document.querySelector(".toast");
-    if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "alert"); document.body.appendChild(t); }
-    t.textContent = text; clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.remove(), 6000);
-    try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred("error"); } catch (e) {}
-  }
-
-  /* ---------- токен бота: нужен ТОЛЬКО чтобы показать превью фото ---------- */
-  const TOKEN_RE = /^\d{6,}:[\w-]{30,}$/;
-  const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
-  const cloudGet = () => withTimeout(new Promise((res) => {
-    try { tg.CloudStorage.getItem("tk", (err, v) => res(err ? null : v)); } catch (e) { res(null); }
-  }), 1500);
-  const cloudSet = (v) => { try { tg.CloudStorage.setItem("tk", v, () => {}); } catch (e) {} };
-  const localGet = () => { try { return localStorage.getItem("tk"); } catch (e) { return null; } };
-  const localSet = (v) => { try { localStorage.setItem("tk", v); } catch (e) {} };
-  const saveToken = (v) => { cloudSet(v); localSet(v); };
-
-  async function findToken() {
-    // 1) из адреса кнопки: ?tk=... или #tk=...
-    let found = qs.get("tk") || "";
-    if (!found) { const m = /(?:^#|&)tk=([^&]+)/.exec(location.hash); if (m) { try { found = decodeURIComponent(m[1]); } catch (e) {} } }
-    if (TOKEN_RE.test(found)) {
-      saveToken(found);
-      try {   // убираем токен из адресной строки страницы
-        const sp = new URLSearchParams(location.search); sp.delete("tk");
-        const rest = location.hash.slice(1).split("&").filter((x) => x && x.indexOf("tk=") !== 0).join("&");
-        history.replaceState(null, "", location.pathname + (sp.toString() ? "?" + sp : "") + (rest ? "#" + rest : ""));
-      } catch (e) {}
-      return found;
-    }
-    // 2) из хранилища Mini App (облако Telegram / локально)
-    const stored = (await cloudGet()) || localGet();
-    return stored && TOKEN_RE.test(stored) ? stored : "";
-  }
-
-  function askToken(message) {
-    return new Promise((resolve) => {
-      showState(
-        "<h2>Подключи превью</h2><p>" + esc(message || "Чтобы показывать фото, странице нужен токен бота. Вставь его один раз из @BotFather.") +
-        "</p><p style='font-size:12.5px'>Токен хранится только в твоём Telegram (облако Mini App) и отправляется только на api.telegram.org.</p>" +
-        '<input id="tk" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="123456789:AA…">' +
-        '<button id="tk-ok" class="primary">Сохранить</button><button id="tk-skip">Без превью</button>');
-      $("tk-ok").onclick = () => {
-        const v = $("tk").value.trim();
-        if (!TOKEN_RE.test(v)) { toast("Это не похоже на токен бота"); return; }
-        saveToken(v); resolve(v);
-      };
-      $("tk-skip").onclick = () => resolve("");
-    });
-  }
-
-  /* ---------- Smart Fit: тот же расчёт, что в smartfit.py (условный А4, 90 dpi) ---------- */
-  const pyRound = (x) => { const f = Math.floor(x), d = x - f; return d < 0.5 ? f : d > 0.5 ? f + 1 : (f % 2 === 0 ? f : f + 1); };
-  const MM = 25.4;
-  function nominalGeo(dpi = 90, hwMm = 3) {
-    const pw = pyRound(210 / MM * dpi), ph = pyRound(297 / MM * dpi), off = pyRound(hwMm / MM * dpi);
-    return { pw: pw - 2 * off, ph: ph - 2 * off, ox: off, oy: off, physW: pw, physH: ph, dpiX: dpi, dpiY: dpi };
-  }
-  function region(g, marginMm) {
-    const mx = marginMm / MM * g.dpiX, my = marginMm / MM * g.dpiY;
-    const left = Math.max(0, mx - g.ox), top = Math.max(0, my - g.oy);
-    const right = Math.min(g.pw, g.physW - mx - g.ox), bottom = Math.min(g.ph, g.physH - my - g.oy);
-    if (right - left < 1 || bottom - top < 1) return [0, 0, g.pw, g.ph];
-    return [pyRound(left), pyRound(top), pyRound(right), pyRound(bottom)];
-  }
-  function computeLayout(imgW, imgH, g, smart, marginMm) {
-    const [left, top, right, bottom] = smart ? region(g, marginMm) : [0, 0, g.pw, g.ph];
-    const rw = right - left, rh = bottom - top, rwIn = rw / g.dpiX, rhIn = rh / g.dpiY;
-    const scaleFor = (rot) => {
-      const w = rot ? imgH : imgW, h = rot ? imgW : imgH;
-      return smart ? Math.min(rwIn / w, rhIn / h) : Math.max(rwIn / w, rhIn / h);
-    };
-    const sPlain = scaleFor(false), sRot = scaleFor(true);
-    const rotate = smart ? sRot > sPlain * 1.001 : sRot < sPlain * 0.999;
-    const sIn = rotate ? sRot : sPlain;
-    const w = rotate ? imgH : imgW, h = rotate ? imgW : imgH;
-    let box, crop = null;
-    if (smart) {
-      const dw = w * sIn * g.dpiX, dh = h * sIn * g.dpiY;
-      const x0 = left + (rw - dw) / 2, y0 = top + (rh - dh) / 2;
-      box = [pyRound(x0), pyRound(y0), pyRound(x0) + pyRound(dw), pyRound(y0) + pyRound(dh)];
-    } else {
-      const visW = Math.min(w, rwIn / sIn), visH = Math.min(h, rhIn / sIn);
-      const cl = pyRound((w - visW) / 2), ct = pyRound((h - visH) / 2);
-      crop = [cl, ct, Math.min(w, cl + pyRound(visW)), Math.min(h, ct + pyRound(visH))];
-      if (crop[0] === 0 && crop[1] === 0 && crop[2] === w && crop[3] === h) crop = null;
-      box = [left, top, right, bottom];
-    }
-    return { rotate, crop, box, effDpi: 1 / sIn };
-  }
-  window.__smartfit = { computeLayout, nominalGeo, pyRound };   // для проверки в консоли
-
-  /* ---------- превью ---------- */
-  const imgCache = new Map();   // индекс файла -> Promise<HTMLImageElement>
-  const ICON = (path) => '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#7a828c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + path + "</svg>";
-  const ICON_DOC = ICON('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>');
-  const ICON_IMG = ICON('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>');
-
-  function fetchImage(i) {
-    if (imgCache.has(i)) return imgCache.get(i);
-    const p = (async () => {
-      const api = "https://api.telegram.org/bot" + state.token;
-      let info;
-      try {
-        const r = await fetch(api + "/getFile?file_id=" + encodeURIComponent(fileIds[i]));
-        info = await r.json();
-      } catch (e) { const err = new Error("Нет связи с Telegram. Проверь интернет."); err.code = "net"; throw err; }
-      if (!info.ok) {
-        const err = new Error(info.error_code === 401 ? "Токен не подошёл." : (info.description || "Telegram не отдал файл"));
-        err.code = info.error_code === 401 ? "token" : "tg"; throw err;
-      }
-      return new Promise((res, rej) => {
-        const img = new Image();
-        img.onload = () => res(img);
-        img.onerror = () => rej(Object.assign(new Error("Не удалось загрузить фото"), { code: "img" }));
-        img.src = "https://api.telegram.org/file/bot" + state.token + "/" + info.result.file_path;
-      });
-    })();
-    p.catch(() => imgCache.delete(i));
-    imgCache.set(i, p);
-    return p;
-  }
-
-  function drawSheet(img, smart) {
-    const canvas = $("canvas"), cssW = canvas.clientWidth || 236, dpr = Math.min(3, window.devicePixelRatio || 1);
-    const g = nominalGeo();
-    const W = g.physW, H = g.physH;               // условный лист А4 в «пикселях 90 dpi»
-    canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssW * dpr * H / W);
-    const ctx = canvas.getContext("2d"), k = canvas.width / W;
-    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingQuality = "high";
-    const iw = img.naturalWidth, ih = img.naturalHeight;
-    const L = computeLayout(iw, ih, g, smart, MARGIN_MM);
-    // Повёрнутую копию делаем в уменьшенном виде, чтобы не держать в памяти огромный холст
-    const f = Math.min(1, 1600 / Math.max(iw, ih));
-    const sw = Math.max(1, Math.round(iw * f)), sh = Math.max(1, Math.round(ih * f));
-    let src, srcW, srcH;
-    if (L.rotate) {                                // как PIL ROTATE_90: против часовой стрелки
-      src = document.createElement("canvas"); src.width = sh; src.height = sw;
-      const c = src.getContext("2d"); c.imageSmoothingQuality = "high";
-      c.translate(0, sw); c.rotate(-Math.PI / 2); c.drawImage(img, 0, 0, sw, sh);
-      srcW = sh; srcH = sw;
-    } else { src = img; srcW = iw; srcH = ih; }
-    const rw = L.rotate ? ih : iw, rh = L.rotate ? iw : ih;   // размеры «после поворота» в пикселях оригинала
-    const kx = srcW / rw, ky = srcH / rh;
-    const cr = L.crop || [0, 0, rw, rh];
-    const dx = (g.ox + L.box[0]) * k, dy = (g.oy + L.box[1]) * k;
-    const dw = (L.box[2] - L.box[0]) * k, dh = (L.box[3] - L.box[1]) * k;
-    ctx.drawImage(src, cr[0] * kx, cr[1] * ky, (cr[2] - cr[0]) * kx, (cr[3] - cr[1]) * ky, dx, dy, dw, dh);
-    return { w: iw, h: ih, dpi: Math.round(L.effDpi), rotated: L.rotate, cropped: !!L.crop };
-  }
-
-  function renderChips(items) {
-    $("chips").innerHTML = items.map(([t, warn]) => '<span class="chip' + (warn ? " warn" : "") + '">' + esc(t) + "</span>").join("");
-  }
-
-  function note(html) {
-    const sheet = $("sheet");
-    sheet.classList.remove("loading");
-    const c = $("canvas"); c.width = 2; c.height = 2; c.getContext("2d").clearRect(0, 0, 2, 2);
-    sheet.querySelectorAll(".sheet-note").forEach((n) => n.remove());
-    sheet.insertAdjacentHTML("beforeend", '<div class="sheet-note">' + html + "</div>");
-  }
-
-  let previewToken = 0, lastImg = null;
-  async function loadPreview() {
-    const i = state.file, kind = kinds[i] || "w", token = ++previewToken, sheet = $("sheet");
-    sheet.querySelectorAll(".sheet-note").forEach((n) => n.remove());
-    if (kind === "f") { note(ICON_DOC + "<b>PDF</b><span>Страницы печатаются целиком, поля не меняются</span>"); renderChips([["PDF печатается без изменения полей", false]]); return; }
-    if (kind === "w") { note(ICON_DOC + "<b>Word-файл</b><span>Печатается через Word — качество и поля не применяются</span>"); renderChips([["Через Word", false]]); return; }
-    if (!fileIds[i]) { note(ICON_IMG + "<b>Превью не вместилось</b><span>Файл всё равно напечатается</span>"); renderChips([]); return; }
-    if (!state.token) {
-      note(ICON_IMG + "<b>Превью выключено</b><span>Нужен токен бота, чтобы показать фото</span><button id='tk-open'>Подключить</button>");
-      $("tk-open").onclick = reconnect; renderChips([]); return;
-    }
-    sheet.classList.add("loading");
-    try {
-      const img = await fetchImage(i);
-      if (token !== previewToken) return;
-      lastImg = img; sheet.classList.remove("loading");
-      const m = drawSheet(img, state.smart);
-      const chips = [[m.w + " × " + m.h + " px", false]];
-      chips.push(["≈ " + m.dpi + " DPI на А4" + (m.dpi < 150 ? " — низкое разрешение" : ""), m.dpi < 150]);
-      if (m.rotated) chips.push(["Повёрнуто на 90°", false]);
-      if (m.cropped) chips.push(["Края обрезаются", false]);
-      renderChips(chips);
-    } catch (e) {
-      if (token !== previewToken) return;
-      note(ICON_IMG + "<b>Превью недоступно</b><span>" + esc(e.message) + "</span>" + (e.code === "token" ? "<button id='tk-open'>Ввести токен заново</button>" : ""));
-      const b = $("tk-open"); if (b) b.onclick = reconnect;
-      renderChips([]);
-    }
-  }
-  async function reconnect() {
-    const t = await askToken("Вставь токен бота ещё раз.");
-    state.token = t; imgCache.clear(); showApp(); loadPreview();
-  }
-
-  /* ---------- отрисовка настроек ---------- */
-  function renderFiles() {
-    const box = $("files");
-    box.classList.toggle("hidden", total < 2);
-    box.innerHTML = Array.from({ length: total }, (_, i) =>
-      '<button class="file-tab" role="tab" aria-selected="' + (i === state.file) + '" data-i="' + i + '">' + (i + 1) + (kinds[i] === "f" ? " · PDF" : kinds[i] === "w" ? " · Word" : " · Фото") + "</button>").join("");
-    box.querySelectorAll(".file-tab").forEach((b) => b.onclick = () => { state.file = +b.dataset.i; haptic(); renderFiles(); loadPreview(); });
-  }
-  function renderQuality() {
-    $("quality").innerHTML = QUALITY.map((q, i) =>
-      '<button class="seg" role="radio" aria-checked="' + (q.key === state.quality) + '" data-k="' + q.key + '">' +
-      '<span class="drops">' + [0, 1, 2].map((d) => '<i class="' + (d <= i ? "on" : "") + '"></i>').join("") + "</span>" +
-      "<b>" + esc(q.title) + "</b><small>" + q.dpi + " DPI</small></button>").join("");
-    $("quality").querySelectorAll(".seg").forEach((b) => b.onclick = () => { state.quality = b.dataset.k; haptic(); renderQuality(); renderSummary(); });
-    $("quality-hint").textContent = QUALITY.find((q) => q.key === state.quality).hint;
-  }
-  const PAGE = (inner) => '<svg class="pg" width="30" height="42" viewBox="0 0 30 42" aria-hidden="true"><rect x=".75" y=".75" width="28.5" height="40.5" rx="2" fill="#fff" stroke="currentColor" stroke-opacity=".35" stroke-width="1.5"/>' + inner + "</svg>";
-  const MODES = [
-    { smart: true,  title: "Целиком",      sub: "всё фото видно, тонкие поля",
-      icon: PAGE('<rect x="4" y="12" width="22" height="18" rx="1" fill="#2481cc"/>') },
-    { smart: false, title: "На весь лист", sub: "по размеру кадра, края обрезаются",
-      icon: PAGE('<rect x="1.5" y="1.5" width="27" height="39" rx="1.5" fill="#2481cc"/>') },
-  ];
-  function renderSmart() {
-    $("mode").innerHTML = MODES.map((m) =>
-      '<button class="seg" role="radio" aria-checked="' + (m.smart === state.smart) + '" data-s="' + (m.smart ? 1 : 0) + '">' +
-      m.icon + "<b>" + m.title + "</b><small>" + m.sub + "</small></button>").join("");
-    $("mode").querySelectorAll(".seg").forEach((b) => b.onclick = () => {
-      const smart = b.dataset.s === "1";
-      if (smart === state.smart) return;
-      state.smart = smart; haptic(); renderSmart(); renderSummary();
-      if (lastImg && (kinds[state.file] === "p" || kinds[state.file] === "i")) loadPreview();
-    });
-    $("smart-hint").textContent = state.smart
-      ? "Фото помещается на лист целиком, пропорции сохраняются, поля — минимальные."
-      : "Фото растягивается на весь лист (как «Изображение по размеру кадра» в Windows), лишнее по краям обрезается.";
-  }
-  function renderCopies() {
-    $("copies").textContent = state.copies;
-    $("minus").disabled = state.copies <= 1; $("plus").disabled = state.copies >= 99;
-  }
-  function renderSummary() {
-    const q = QUALITY.find((x) => x.key === state.quality);
-    $("summary").textContent = q.title + " качество · " + (state.smart ? "целиком" : "на весь лист") + " · копий: " + state.copies + " · " + filesWord(total);
-  }
-  $("minus").onclick = () => { if (state.copies > 1) { state.copies--; haptic(); renderCopies(); renderSummary(); } };
-  $("plus").onclick = () => { if (state.copies < 99) { state.copies++; haptic(); renderCopies(); renderSummary(); } };
-
-  /* ---------- отправка боту: Telegram.WebApp.sendData ---------- */
-  function sendToBot(payload, onFail) {
-    if (!tg || typeof tg.sendData !== "function") { onFail("Открой страницу из Telegram, кнопкой «Настроить печать» в чате с ботом."); return; }
-    try { tg.sendData(JSON.stringify(payload)); }
-    catch (e) { onFail("Не получилось отправить: " + e.message); return; }
-    // Если всё в порядке, Telegram закрывает Mini App сразу. Если окно живо через 2 с - что-то не так.
-    setTimeout(() => onFail("Не отправилось. Закрой окно и открой заказ кнопкой «Настроить печать» на клавиатуре бота (не из сообщения)."), 2500);
-  }
-
-  $("print").onclick = () => {
-    if (state.sending) return;
-    state.sending = true; const btn = $("print"); btn.disabled = true; btn.textContent = "Отправляю…";
-    sendToBot({ v: 1, o: orderId, a: "print", q: state.quality, s: state.smart, c: state.copies }, (msg) => {
-      state.sending = false; btn.disabled = false; btn.textContent = "Отправить на печать"; toast(msg);
-    });
-  };
-  $("reject").onclick = () => {
-    const go = (ok) => { if (ok) sendToBot({ v: 1, o: orderId, a: "reject" }, toast); };
-    if (tg && tg.showConfirm) tg.showConfirm("Отклонить заказ? Клиент получит уведомление.", go); else go(confirm("Отклонить заказ?"));
-  };
-
-  /* ---------- запуск ---------- */
-  function showApp() {
-    $("title").textContent = "Заказ #" + orderId;
-    const who = qs.get("u");
-    $("subtitle").textContent = (who ? who + " · " : "") + filesWord(total);
-    $("state").classList.add("hidden"); $("app").classList.remove("hidden");
-    renderFiles(); renderQuality(); renderSmart(); renderCopies(); renderSummary();
-  }
-
-  async function init() {
-    if (!orderId) {
-      return showState("<h2>Нет номера заказа</h2><p>Открой заказ кнопкой «Настроить печать» на клавиатуре в чате с ботом.</p>");
-    }
-    state.token = await findToken();
-    const needsPreview = kinds.some((k, i) => (k === "p" || k === "i") && fileIds[i]);
-    if (!state.token && needsPreview && !sessionStorageGet("skipTk")) {
-      state.token = await askToken();
-      if (!state.token) sessionStorageSet("skipTk", "1");
-    }
-    showApp(); loadPreview();
-  }
-  function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
-  function sessionStorageSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
-  init();
-})();
-</script>
-</body>
-</html>
+const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand();try{tg.disableVerticalSwipes()}catch(e){}}
+const $=i=>document.getElementById(i),qs=new URLSearchParams(location.search);
+let TK=qs.get("tk")||(/tk=([^&]+)/.exec(location.hash)||[])[1]||localStorage.getItem("tk")||"";const AD=qs.get("a");
+try{if(TK)localStorage.setItem("tk",TK);if(qs.get("tk"))history.replaceState(null,"",location.pathname)}catch(e){}
+const api="https://api.telegram.org/bot"+TK,QL={low:"Минимальное",medium:"Среднее",high:"Высокое"};
+const PAPERS={a4:"A4",a5:"A5",b5:"B5",letter:"Letter","10x15":"10×15","13x18":"13×18"},MEDIA={plain:"Обычная",matte:"Матовая",glossy:"Глянцевая",semi:"Полуглянец",driver:"Как в драйвере"};
+let S=null,cur=null,dr=null,tab="q";const img={};
+async function pic(fid){if(!fid||!TK)return"";if(img[fid]!==undefined)return img[fid];img[fid]="";
+ try{const r=await(await fetch(api+"/getFile?file_id="+encodeURIComponent(fid))).json();img[fid]="https://api.telegram.org/file/bot"+TK+"/"+r.result.file_path}catch(e){}return img[fid]}
+function seg(id,opts,val,on){return'<div class="row" id="'+id+'">'+Object.entries(opts).map(([k,v])=>'<button data-k="'+k+'" class="'+(k==val?"on":"")+'">'+v+'</button>').join("")+'</div>'}
+function controls(d,pre){return'<label>Качество</label>'+seg(pre+"q",QL,d.q)+'<label>Режим листа</label>'+seg(pre+"s",{1:"Целиком",0:"На весь лист"},d.s?1:0)+
+'<label>Размер бумаги</label>'+seg(pre+"p",PAPERS,d.p)+'<label>Тип бумаги</label>'+seg(pre+"m",MEDIA,d.m)+
+'<label>Яркость: <b id="'+pre+'bv">'+d.b+'%</b></label><input type="range" min="0" max="100" value="'+d.b+'" id="'+pre+'b">'+
+'<label>Копий</label><div class="row"><button id="'+pre+'-">−</button><button id="'+pre+'n" style="flex:2">'+d.c+'</button><button id="'+pre+'+">+</button></div>'}
+function bind(d,pre,after){const g=i=>$(pre+i);
+ [["q",v=>d.q=v],["s",v=>d.s=v==="1"],["p",v=>d.p=v],["m",v=>d.m=v]].forEach(([k,f])=>g(k).onclick=e=>{const b=e.target.closest("button");if(!b)return;f(b.dataset.k);[...g(k).children].forEach(c=>c.classList.toggle("on",c===b));tg&&tg.HapticFeedback&&tg.HapticFeedback.selectionChanged();after&&after()});
+ g("b").oninput=e=>{d.b=+e.target.value;g("bv").textContent=d.b+"%";after&&after()};
+ g("-").onclick=()=>{d.c=Math.max(1,d.c-1);g("n").textContent=d.c};g("+").onclick=()=>{d.c=Math.min(99,d.c+1);g("n").textContent=d.c}}
+function filt(b){return"brightness("+(1+b/160).toFixed(2)+") contrast("+(1-b/700).toFixed(2)+")"}
+function send(o){if(tg)tg.sendData(JSON.stringify(o));else alert(JSON.stringify(o))}
+function renderQ(){const q=S.q;$("ql").innerHTML=q.length?q.map((o,i)=>'<div class="card q" data-o="'+o.o+'" style="animation-delay:'+i*70+'ms"><div class="num">'+(i+1)+'</div><div class="th" data-f="'+(o.f[0]||"")+'"></div><div class="t"><b>'+(o.t||"Заказ")+'</b><span class="mut">#'+o.o+' · файлов: '+o.n+'</span></div><span>›</span></div>').join(""):'<div class="card empty"><span>🕊</span>Очередь пуста</div>';
+ document.querySelectorAll(".th").forEach(async e=>{const u=await pic(e.dataset.f);if(u)e.style.backgroundImage="url("+u+")"});
+ document.querySelectorAll(".q").forEach(e=>e.onclick=()=>openOrd(e.dataset.o));
+ $("hl").innerHTML=S.h.length?'<div class="mut" style="margin:8px 4px">Недавно</div>'+S.h.map(h=>'<div class="mut" style="padding:3px 4px">'+(h.ok?"✅":"⚠️")+" #"+h.o+" · "+h.t+"</div>").join(""):""}
+async function openOrd(id){const o=S.q.find(x=>x.o===id);if(!o){cur=null;$("ord").classList.add("hide");return}
+ if(!cur||cur.o!==id){cur=o;dr={...S.d,c:1}}
+ $("ord").classList.remove("hide");$("oti").textContent=o.t||"Заказ";$("ofn").textContent="#"+o.o+" · файлов: "+o.n;
+ $("ctl").innerHTML=controls(dr,"o");bind(dr,"o",()=>{$("opv").style.filter=filt(dr.b)});
+ const u=await pic(o.f[0]);$("opv").style.backgroundImage=u?"url("+u+")":"";$("opv").style.filter=filt(dr.b);$("ord").scrollIntoView({behavior:"smooth"})}
+$("pgo").onclick=()=>{if(cur)send({a:"print",o:cur.o,q:dr.q,s:dr.s,c:dr.c,b:dr.b,p:dr.p,m:dr.m})};
+$("prj").onclick=()=>{if(cur)send({a:"reject",o:cur.o})};$("pcl").onclick=()=>{cur=null;$("ord").classList.add("hide")};
+let dd=null;function renderS(){if(dd)return;dd={...S.d,c:1};$("dctl").innerHTML=controls(dd,"d").replace(/<label>Копий[\s\S]*$/,"");bind(dd,"d")}
+function renderC(){if(!$("cl"))return;$("cl").innerHTML=S.ca.length?S.ca.map(i=>'<div class="ca"><span>👤 '+i+'</span><button class="bad" data-i="'+i+'">Убрать</button></div>').join(""):'<div class="mut" style="padding:6px 0">Пока никого</div>';
+ $("cl").querySelectorAll("button").forEach(b=>b.onclick=()=>send({a:"coadmin",op:"del",id:+b.dataset.i}))}
+$("cadd").onclick=()=>{const v=+$("cid").value.trim();if(v>0)send({a:"coadmin",op:"add",id:v})};
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));["q","s","c"].forEach(t=>$("t"+t)&&$("t"+t).classList.toggle("hide",t!==tab))});
+if(qs.get("r")==="co"){document.querySelector("[data-t=c]").remove();$("tc").remove()}
+/* принтер: анимация */
+const EST=30;let lastFid="";
+async function tick(){const n=S&&S.now,pr=$("pr"),sh=$("sheet");pr.className="pr";let p=0,t="Ожидает заказов",s="",y=-250;
+ if(n){const P=Math.max(1,n.P||1);
+  if(n.st==="dl"){t="Скачиваю файлы…";pr.classList.add("busy")}
+  else if(n.st==="wait"||n.st==="print"){pr.classList.add("busy");const el=n.t0?Math.max(0,Date.now()/1e3-n.t0):0,pg=Math.min(P,Math.floor(el/EST)+1),fr=Math.min(.96,(el%EST)/EST);p=Math.min(.97,((pg-1)+fr)/P);y=-250+fr*250;t="Печатаю заказ #"+n.o;s="Страница "+pg+" из "+P+" · "+(n.t||"")}
+  else if(n.st==="done"){pr.classList.add("done");p=1;y=-20;t="✅ Готово! Заказ #"+n.o}
+  else{pr.classList.add("err");t="⚠️ Ошибка печати"}
+  if(n.f&&n.f!==lastFid){lastFid=n.f;const u=await pic(n.f);sh.classList.toggle("bl",!u);sh.style.backgroundImage=u?"url("+u+")":""}
+ }else lastFid="";
+ sh.style.transform="translateY("+y+"px)";$("pb").style.width=p*100+"%";$("pt").textContent=t;$("ps").textContent=s;$("dot").classList.toggle("on",!!S)}
+async function poll(){try{const r=await(await fetch(api+"/getChat?chat_id="+AD)).json();const m=r.result&&r.result.pinned_message;
+ if(m){S=JSON.parse(m.text.split("\n")[1]);renderQ();renderC();renderS();if(cur)$("ord").classList.contains("hide")||0}}catch(e){}tick()}
+if(!TK||!AD)$("pt").textContent="Открой приложение кнопкой «🖨 Админ-панель» в чате с ботом";
+poll();setInterval(poll,2500);setInterval(()=>S&&tick(),1000);
+</script></body></html>
