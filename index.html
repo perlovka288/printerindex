@@ -55,7 +55,7 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 .pc[data-led=ok] .led{background:var(--ok)}.pc[data-led=err] .led{background:var(--bad)}
 @keyframes pulse{to{opacity:.25}}
 .pc-title{font-size:19px;font-weight:620;margin:6px 0 0;letter-spacing:-.01em}
-.printer{position:relative;width:236px;height:262px;margin:12px auto 0}
+.printer{position:relative;width:236px;height:268px;margin:12px auto 0}
 .p-body{position:absolute;left:0;right:0;top:14px;height:96px;border-radius:24px;background:linear-gradient(#2d2d32,#1c1c20);border:1px solid var(--line2);box-shadow:0 16px 28px -14px #000;z-index:3}
 .pc[data-led=busy] .p-body{animation:vib .22s infinite}
 @keyframes vib{50%{transform:translateY(1px)}}
@@ -63,14 +63,14 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 .p-led{position:absolute;right:22px;top:16px;width:7px;height:7px;border-radius:50%;background:var(--dim)}
 .pc[data-led=busy] .p-led{background:var(--tx)}.pc[data-led=ok] .p-led{background:var(--ok)}.pc[data-led=err] .p-led{background:var(--bad)}
 .p-tray{position:absolute;left:50%;top:0;width:126px;height:26px;margin-left:-63px;border-radius:8px 8px 0 0;background:var(--s3);border:1px solid var(--line2);border-bottom:0;z-index:1}
-.sheet{position:absolute;left:50%;top:100px;width:112px;height:158px;margin-left:-56px;border-radius:2px;background:#e9e9e6;box-shadow:0 10px 24px -8px #000;z-index:2;overflow:hidden;
-  --r:0;clip-path:inset(0 0 calc(100% - (100% * var(--r))) 0);transition:clip-path 1s linear,opacity .3s;opacity:0}
+.p-out{position:absolute;left:50%;top:108px;width:150px;height:158px;margin-left:-75px;overflow:hidden;z-index:2}
+.sheet{position:absolute;left:50%;top:0;width:106px;height:150px;margin-left:-53px;border-radius:2px;background:#e9e9e6;box-shadow:0 8px 18px -6px #000;overflow:hidden;
+  --r:0;transform:translateY(calc((var(--r) - 1) * 100%));transition:transform 1s linear,opacity .25s;opacity:0}
 .sheet.show{opacity:1}.sheet.reset{transition:none}
-.sheet .ph{position:absolute;inset:0;background:#c9c9c6 center/cover no-repeat;opacity:0;transition:opacity .35s}.sheet .ph.ld{opacity:1}
-.sheet .ph-ic{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a86}.sheet .ph-ic .ic{width:30px;height:30px}
+.sheet.fall{transition:transform .28s ease-in,opacity .28s;transform:translateY(26px);opacity:0}
+.sheet .ph{position:absolute;top:0;left:0;right:0;bottom:0;background:#c9c9c6 center/cover no-repeat;opacity:0;transition:opacity .35s}.sheet .ph.ld{opacity:1}
+.sheet .ph-ic{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a86}.sheet .ph-ic .ic{width:28px;height:28px}
 .sheet .ph.ld~.ph-ic{display:none}
-.scan{position:absolute;left:50%;top:100px;width:124px;height:2px;margin-left:-62px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);z-index:4;opacity:0;transform:translateY(calc(158px * var(--r,0)));transition:transform 1s linear,opacity .3s}
-.scan.on{opacity:.9}
 .okb{position:absolute;left:50%;top:150px;width:58px;height:58px;margin-left:-29px;border-radius:50%;background:var(--ok);color:#06150d;display:grid;place-items:center;z-index:5;transform:scale(0);transition:transform .5s cubic-bezier(.2,1.4,.4,1)}
 .okb .ic{width:30px;height:30px;stroke-width:2.4}
 .pc[data-led=ok] .okb{transform:scale(1)}
@@ -124,7 +124,7 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 .ov-top .tt{flex:1;min-width:0}.ov-top .tt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ov-top .tt span{color:var(--mut);font-size:12.5px}
 .ov-body{padding:4px 14px calc(120px + env(safe-area-inset-bottom,0px))}
 .paper{margin:4px auto 10px;position:relative;border-radius:3px;background:#efefec;box-shadow:0 12px 30px -10px #000;overflow:hidden;transition:width .3s,height .3s}
-.paper .im{position:absolute;inset:0;background:center/contain no-repeat;transition:filter .2s}
+.paper .im{position:absolute;top:0;left:0;right:0;bottom:0;background:center/contain no-repeat;transition:filter .2s}
 .paper .nofile{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a86;text-align:center;font-size:13px;padding:10px}
 .strip{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
 .strip .th{width:54px;height:54px;opacity:.55;border:2px solid transparent}.strip .th.sel{opacity:1;border-color:var(--tx)}
@@ -171,8 +171,7 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
       <div class="pc-title" id="pc-title">Принтер свободен</div>
       <div class="printer" id="printer">
         <div class="p-tray"></div>
-        <div class="sheet" id="sheet"><div class="ph" id="sheet-ph"></div><div class="ph-ic"><svg class="ic"><use href="#i-image"/></svg></div></div>
-        <div class="scan" id="scan"></div>
+        <div class="p-out"><div class="sheet" id="sheet"><div class="ph" id="sheet-ph"></div><div class="ph-ic"><svg class="ic"><use href="#i-image"/></svg></div></div></div>
         <div class="p-body"><span class="p-led"></span></div>
         <div class="okb"><svg class="ic"><use href="#i-check"/></svg></div>
       </div>
@@ -236,38 +235,43 @@ function fmtDay(ts) { const d = new Date(ts * 1000); return d.getDate() + " " + 
 /* n - состояние печати из бота; recvAt - когда оно получено; el у бота = секунд с начала печати на момент публикации */
 const mono = { o: "", v: 0 };
 function calcProg(n, recvAt, nowMs) {
-  const P = n.P || 0, out = { st: n.st, P, pages: 0, pr: 0, k: 0, cur: 0, fr: 0 };
-  if (n.st === "done") { out.pages = P; }
+  const P = n.P || 0, d = Math.min(P, n.d || 0);
+  const out = { st: n.st, P, d, pages: d, pr: 0, k: d, cur: P ? Math.min(P - 1, d) : 0, fr: 0 };
+  /* d - РЕАЛЬНО напечатанные страницы: их задания ушли из очереди принтера (так считает бот).
+     Внутри текущей страницы шкала ползёт по времени, но до следующей страницы сама не дотягивает. */
+  if (n.st === "done") { out.pages = P; out.k = P; out.cur = Math.max(0, P - 1); out.fr = 1; }
   else if (n.st === "print" && P > 0) {
-    const el = (n.el || 0) + Math.max(0, nowMs - recvAt) / 1000;
-    out.pages = Math.max(n.d || 0, Math.min(el / Math.max(0.01, n.spp || 40), P - 0.02));
-  } else if (n.st === "stop" || n.st === "err") { out.pages = Math.min(P, n.d || 0); }
-  else { out.pages = Math.min(P, n.d || 0); }
-  if (n.st === "print" || n.st === "render") {   // прогресс только растёт
+    if (d >= P) { out.pages = P - 0.01; out.cur = P - 1; out.fr = 1; }   // все страницы вышли, принтер заканчивает
+    else {
+      const el = (n.el || 0) + Math.max(0, nowMs - recvAt) / 1000;
+      out.fr = Math.min(0.97, el / Math.max(0.01, n.spp || 40)); out.pages = d + out.fr;
+    }
+  } else if (n.st === "stop" || n.st === "err") { out.pages = d; }
+  if (n.st === "print") {   // шкала только растёт
     if (mono.o !== n.o) { mono.o = n.o; mono.v = 0; }
-    out.pages = Math.max(out.pages, mono.v); mono.v = out.pages;
+    if (out.pages < mono.v) { out.pages = Math.min(mono.v, d + 0.97); out.fr = out.pages - d; }
+    mono.v = out.pages;
   }
   out.pr = P ? Math.min(1, out.pages / P) : 0;
-  out.k = Math.floor(out.pages + 1e-9);
-  out.cur = P ? Math.min(P - 1, out.k) : 0;
-  out.fr = n.st === "done" ? 1 : (out.pages - Math.floor(out.pages));
   return out;
 }
 
 /* ---------- данные: состояние (закреплённое сообщение) и файл истории ---------- */
 let S = null, DOC = null, docVer = -1, recvAt = 0, online = false, loadingDoc = false, docErr = false;
 async function api(method, params) { const r = await fetch(API + "/" + method + "?" + new URLSearchParams(params || {})); return r.json(); }
-const pathCache = new Map(), urlCache = new Map();
+const pathCache = new Map(), urlCache = new Map(), dimCache = new Map(), dead = new Set();
 async function fileUrl(fid) {
   if (!fid || !TK) return "";
   if (pathCache.has(fid)) return pathCache.get(fid);
-  for (let a = 0; a < 3; a++) {
+  if (dead.has(fid)) return "";
+  for (let a = 0; a < 5; a++) {
     try {
       const r = await api("getFile", { file_id: fid });
       if (r.ok) { const u = "https://api.telegram.org/file/bot" + TK + "/" + r.result.file_path; pathCache.set(fid, u); return u; }
-      if (r.error_code === 400 || r.error_code === 401) break;
+      if (r.error_code === 429) { const ra = r.parameters && typeof r.parameters.retry_after === "number" ? r.parameters.retry_after : 2; await sleep(ra * 1000 + 200); continue; }   // лимит запросов: ждём сколько просит Telegram, а не сдаёмся
+      if (r.error_code === 400 || r.error_code === 401) { dead.add(fid); break; }   // файл слишком большой / не найден: повторять бесполезно
     } catch (e) {}
-    await sleep(400 * (a + 1));
+    await sleep(500 * (a + 1));
   }
   return "";
 }
@@ -279,10 +283,11 @@ function loadImg(fid) {
     for (let a = 0; a < 3; a++) {
       const u = await fileUrl(fid);
       if (u) {
-        const ok = await new Promise((res) => { const i = new Image(); i.onload = () => res(true); i.onerror = () => res(false); i.src = u; });
+        const ok = await new Promise((res) => { const i = new Image(); i.onload = () => { dimCache.set(u, [i.naturalWidth || 0, i.naturalHeight || 0]); res(true); }; i.onerror = () => res(false); i.src = u; });
         if (ok) return u;
         pathCache.delete(fid);
       }
+      if (dead.has(fid)) break;
       await sleep(500 * (a + 1));
     }
     return "";
@@ -291,9 +296,17 @@ function loadImg(fid) {
   p.then((u) => { if (!u) urlCache.delete(fid); });
   return p;
 }
+/* пробует по очереди: сначала маленькое превью, потом исходный файл (или наоборот) */
+async function loadFirst(fids) { for (const f of fids) { if (!f) continue; const u = await loadImg(f); if (u) return u; } return ""; }
 let running = 0; const waitq = [];
-function queued(fn) { return new Promise((res) => { const go = async () => { running++; try { res(await fn()); } finally { running--; if (waitq.length) waitq.shift()(); } }; running < 4 ? go() : waitq.push(go); }); }
-async function hydrate(el) { const u = await queued(() => loadImg(el.dataset.f)); if (u) { el.style.backgroundImage = 'url("' + u + '")'; el.classList.add("ld"); } else el.classList.add("er"); }
+function queued(fn) { return new Promise((res) => { const go = async () => { running++; try { res(await fn()); } finally { running--; if (waitq.length) waitq.shift()(); } }; running < 3 ? go() : waitq.push(go); }); }
+async function hydrate(el) {
+  const u = await queued(() => loadFirst([el.dataset.f, el.dataset.f2]));
+  if (u) { el.style.backgroundImage = 'url("' + u + '")'; el.classList.remove("er"); el.classList.add("ld"); return; }
+  el.classList.add("er");
+  const t = +el.dataset.t || 0;   // не вышло: пробуем ещё несколько раз с паузами
+  if (t < 6) { el.dataset.t = String(t + 1); setTimeout(() => { el.classList.remove("er"); hydrate(el); }, 2500 * (t + 1)); }
+}
 const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); hydrate(e.target); } }), { rootMargin: "250px" }) : null;
 function hydrateAll(root) { if (!root || !root.querySelectorAll) return; root.querySelectorAll("[data-f]:not([data-h])").forEach((el) => { el.dataset.h = "1"; io ? io.observe(el) : hydrate(el); }); }
 
@@ -338,16 +351,49 @@ function showTab(k) {
 }
 
 /* ---------- принтер: анимация и прогресс ---------- */
-let shown = { key: "", fid: "" };
-function pageFid(n, cur) {
+let shown = { key: "", fid: "" }, swapping = false, swapId = 0, pendingKey = "";
+function activeSet(n) {
   const a = DOC && DOC.active && DOC.active.o === n.o ? DOC.active : null;
-  if (a && a.pm && a.pm[cur] != null && a.pm[cur] >= 0 && a.fs[a.pm[cur]]) { const f = a.fs[a.pm[cur]]; return (f.k === "p" || f.k === "i") ? (f.th || f.f) : ""; }
-  return cur === 0 ? (n.th0 || "") : "";
+  return { smart: a && a.s ? a.s.smart !== false : (S ? S.d.s !== false : true), paper: a && a.s && PAPERS[a.s.paper] ? a.s.paper : (S && PAPERS[S.d.p] ? S.d.p : "a4") };
+}
+/* какое фото печатается на странице cur: [маленькое превью, исходный файл] */
+function pageFids(n, cur) {
+  const a = DOC && DOC.active && DOC.active.o === n.o ? DOC.active : null;
+  if (a && a.pm && a.pm[cur] != null && a.pm[cur] >= 0 && a.fs[a.pm[cur]]) { const f = a.fs[a.pm[cur]]; return (f.k === "p" || f.k === "i") ? [f.th, f.f].filter(Boolean) : []; }
+  return cur === 0 && n.th0 ? [n.th0] : [];
+}
+function sizeSheet(sh, paper) {
+  const pp = PAPERS[paper] || PAPERS.a4, H = 150, W = Math.round(H * pp[1] / pp[2]);
+  sh.style.width = W + "px"; sh.style.height = H + "px"; sh.style.marginLeft = -(W / 2) + "px"; sh.dataset.w = String(W); sh.dataset.h = String(H);
+}
+/* кладёт картинку на лист так, как она напечатается: альбомное фото на книжном листе поворачивается, «Целиком» - с полями, «На весь лист» - с обрезкой */
+function placePh(ph, W, H, url, smart) {
+  const dm = dimCache.get(url), rot = !!dm && dm[0] > dm[1] * 1.001 && H >= W;
+  ph.style.backgroundSize = smart ? "contain" : "cover";
+  if (rot) { ph.style.top = "50%"; ph.style.left = "50%"; ph.style.right = "auto"; ph.style.bottom = "auto"; ph.style.width = H + "px"; ph.style.height = W + "px"; ph.style.transform = "translate(-50%,-50%) rotate(-90deg)"; }
+  else { ph.style.top = "0"; ph.style.left = "0"; ph.style.right = "0"; ph.style.bottom = "0"; ph.style.width = ""; ph.style.height = ""; ph.style.transform = ""; }
+}
+async function swapSheet(key, fids, n) {
+  const sh = $("sheet"), ph = $("sheet-ph"), my = ++swapId; swapping = true;
+  const same = sh.classList.contains("show") && shown.key && key && shown.key.split(":")[0] === key.split(":")[0];
+  if (same) {   // предыдущий лист досыхает и падает в лоток, потом выезжает следующий
+    sh.style.setProperty("--r", "1"); await sleep(280); if (my !== swapId) return;
+    sh.classList.add("fall"); await sleep(280); if (my !== swapId) return;
+  }
+  sh.classList.add("reset"); sh.classList.remove("fall", "show"); sh.style.setProperty("--r", "0"); ph.classList.remove("ld"); ph.style.backgroundImage = "";
+  const set = n ? activeSet(n) : { smart: true, paper: "a4" }; sizeSheet(sh, set.paper);
+  void sh.offsetWidth; sh.classList.remove("reset");
+  shown = { key, fid: fids[0] || "" }; swapping = false;
+  if (key && fids.length) {
+    const u = await loadFirst(fids);
+    if (my === swapId && u) { placePh(ph, +sh.dataset.w, +sh.dataset.h, u, set.smart); ph.style.backgroundImage = 'url("' + u + '")'; ph.classList.add("ld"); }
+    if (n && n.P) { const c = calcProg(n, recvAt, Date.now()).cur; [1, 2].forEach((d) => { const f = pageFids(n, Math.min(n.P - 1, c + d)); if (f.length) loadFirst(f); }); }   // следующие фото грузим заранее
+  }
 }
 function tick() {
   const pc = $("pc"); if (!pc) return;
   const n = S && S.now;
-  let led = "idle", lab = "Свободен", title = "Принтер свободен", sub = "", k = 0, P = 0, pct = "", pr = 0, stop = false, fr = 0, sheet = false, scan = false, fid = "", key = "";
+  let led = "idle", lab = "Свободен", title = "Принтер свободен", sub = "", k = 0, P = 0, pct = "", pr = 0, stop = false, fr = 0, sheet = false, fids = [], key = "";
   if (!S) { title = "Нет связи"; lab = "Офлайн"; sub = TK ? "Жду данные от бота…" : "Открой приложение кнопкой «Панель принтера» в чате с ботом."; }
   else if (n && n.busy) { led = "busy"; lab = "Занят"; title = "Принтер занят"; sub = "Печатается заказ другого человека"; }
   else if (n) {
@@ -355,8 +401,8 @@ function tick() {
     const who = n.t ? n.t : "";
     if (n.st === "dl") { led = "busy"; lab = "Подготовка"; title = "Скачиваю файлы"; sub = (n.dl || 0) + " из " + (n.dn || 0) + (who ? " · " + who : ""); stop = true; k = 0; }
     else if (n.st === "render") { led = "busy"; lab = "Подготовка"; title = "Готовлю страницы"; sub = "Передано в очередь: " + (n.rd || 0) + " из " + P; stop = true; k = 0; pct = "0%"; }
-    else if (n.st === "print") { led = "busy"; lab = "Печать"; title = "Идёт печать"; sub = (who ? who + " · " : "") + "заказ #" + n.o; stop = true; pct = Math.round(pr * 100) + "%"; sheet = true; scan = true; fr = p.fr; fid = pageFid(n, p.cur); key = n.o + ":" + p.cur + ":" + (fid ? 1 : 0); }
-    else if (n.st === "done") { led = "ok"; lab = "Готово"; title = "Готово"; sub = "Напечатано " + P + " из " + P + (who ? " · " + who : ""); pct = "100%"; pr = 1; k = P; sheet = true; fr = 1; fid = pageFid(n, Math.max(0, P - 1)); key = n.o + ":" + Math.max(0, P - 1) + ":" + (fid ? 1 : 0); }
+    else if (n.st === "print") { led = "busy"; lab = "Печать"; title = p.d >= P ? "Завершаю печать" : "Идёт печать"; sub = (who ? who + " · " : "") + "заказ #" + n.o; stop = true; pct = Math.round(pr * 100) + "%"; sheet = true; fr = p.fr; fids = pageFids(n, p.cur); key = n.o + ":" + p.cur + ":" + (fids.length ? 1 : 0); }
+    else if (n.st === "done") { led = "ok"; lab = "Готово"; title = "Готово"; sub = "Напечатано " + P + " из " + P + (who ? " · " + who : ""); pct = "100%"; pr = 1; k = P; sheet = true; fr = 1; fids = pageFids(n, Math.max(0, P - 1)); key = n.o + ":" + Math.max(0, P - 1) + ":" + (fids.length ? 1 : 0); }
     else if (n.st === "stop") { lab = "Остановлено"; title = "Печать остановлена"; sub = "Напечатано " + (n.d || 0) + " из " + P; k = n.d || 0; pr = P ? k / P : 0; pct = Math.round(pr * 100) + "%"; }
     else { led = "err"; lab = "Ошибка"; title = "Ошибка печати"; sub = "Подробности в чате с ботом"; }
   } else if (S.q && S.q.length) { lab = "Свободен"; title = "Принтер свободен"; sub = "Ждут: " + S.q.length; }
@@ -365,15 +411,8 @@ function tick() {
   $("cnt").style.visibility = (n && !n.busy && P > 0 && n.st !== "dl") ? "visible" : "hidden";
   $("bar").style.width = Math.round(pr * 1000) / 10 + "%";
   $("stop").classList.toggle("hide", !stop);
-  const sh = $("sheet");
-  if (key !== shown.key) {   // началась новая страница: сбрасываем лист и подгружаем фото
-    sh.classList.add("reset"); sh.style.setProperty("--r", "0"); $("scan").style.setProperty("--r", "0"); $("sheet-ph").classList.remove("ld"); $("sheet-ph").style.backgroundImage = "";
-    void sh.offsetWidth; sh.classList.remove("reset");
-    shown = { key, fid };
-    if (fid) { const my = key; loadImg(fid).then((u) => { if (shown.key === my && u) { $("sheet-ph").style.backgroundImage = 'url("' + u + '")'; $("sheet-ph").classList.add("ld"); } }); }
-    if (S && n && n.st === "print") { const a = DOC && DOC.active; if (a && a.pm) [1, 2].forEach((d) => { const f = pageFid(n, Math.min(P - 1, calcProg(n, recvAt, Date.now()).cur + d)); if (f) loadImg(f); }); }
-  }
-  sh.classList.toggle("show", sheet); sh.style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); $("scan").style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); $("scan").classList.toggle("on", scan && fr > 0 && fr < 0.995);
+  if (key !== shown.key && key !== pendingKey) { pendingKey = key; swapSheet(key, fids, n).then(() => { pendingKey = ""; }, () => { pendingKey = ""; }); }
+  if (!swapping) { const sh = $("sheet"); sh.classList.toggle("show", sheet); sh.style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); }
 }
 
 /* ---------- очередь, история, настройки, доступ ---------- */
@@ -404,7 +443,7 @@ function historyHTML() {
     const body = open ? p.orders.map((o) => {
       const r = RES[o.res] || RES.err;
       const th = (o.fs || []).map((f, i) => ((f.k === "p" || f.k === "i")
-        ? '<div class="th" data-act="view" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"></div>'
+        ? '<div class="th" data-act="view" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"' + (f.th ? ' data-f2="' + esc(f.f) + '"' : "") + "></div>"
         : '<div class="th" title="' + esc(f.n) + '">' + IC("file") + "</div>")).join("");
       return '<div class="ob"><div class="oh"><span class="od">' + fmtTs(o.ts) + " · #" + esc(o.o) + '</span><span class="chip ' + r[1] + '">' + r[0] + "</span></div>" +
         '<div class="meta">' + esc(metaLine(o.s, o.c)) + '</div><div class="grid">' + th + "</div>" +
@@ -475,7 +514,7 @@ function renderOrderBody() {
   const d = OR.dr; if (!d || !$("ctl")) return;
   $("ctl").innerHTML = controlsHTML("dr", d, true);
   $("strip").innerHTML = OR.files.map((f, i) => ((f.k === "p" || f.k === "i")
-    ? '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"></div>'
+    ? '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"' + (f.th ? ' data-f2="' + esc(f.f) + '"' : "") + "></div>"
     : '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '">' + IC("file") + "</div>")).join("");
   hydrateAll($("strip")); paintPreview();
   if (ADMIN && $("clog")) $("clog").innerHTML = OR.log.length ? OR.log.map((l) => '<div class="bub">' + esc(l[1]) + "<small>" + fmtTs(l[0]) + "</small></div>").join("") : '<div class="mut">Пока ничего не отправлено</div>';
@@ -484,10 +523,13 @@ function paintPreview() {
   const d = OR.dr, pp = PAPERS[d.p] || PAPERS.a4, H = Math.min(280, 340 * pp[2] / pp[1]), W = H * pp[1] / pp[2];
   const p = $("paper"); p.style.width = W + "px"; p.style.height = H + "px";
   const f = OR.files[OR.sel], im = $("p-im"), no = $("p-no");
-  im.style.backgroundSize = d.s ? "contain" : "cover"; im.style.filter = "brightness(" + (1 + d.b / 160).toFixed(2) + ") contrast(" + (1 - d.b / 700).toFixed(2) + ")";
+  im.style.position = "absolute"; im.style.backgroundSize = d.s ? "contain" : "cover"; im.style.filter = "brightness(" + (1 + d.b / 160).toFixed(2) + ") contrast(" + (1 - d.b / 700).toFixed(2) + ")";
   $("p-cnt").textContent = OR.files.length ? "Файл " + (OR.sel + 1) + " из " + OR.files.length : "";
   if (!f) { im.style.backgroundImage = ""; no.innerHTML = OR.files.length ? "" : "Превью загружается…"; return; }
-  if (f.k === "p" || f.k === "i") { no.innerHTML = ""; const my = OR.id + ":" + OR.sel; im.dataset.k = my; loadImg(f.f).then((u) => { if (im.dataset.k === my) im.style.backgroundImage = u ? 'url("' + u + '")' : ""; }); }
+  if (f.k === "p" || f.k === "i") {
+    no.innerHTML = ""; const my = OR.id + ":" + OR.sel; im.dataset.k = my;
+    loadFirst([f.f, f.th]).then((u) => { if (im.dataset.k === my) { if (u) placePh(im, W, H, u, d.s); im.style.backgroundImage = u ? 'url("' + u + '")' : ""; if (!u) no.innerHTML = "Превью недоступно: файл слишком большой для Telegram"; } });   // исходник, а если не отдаётся - маленькое превью
+  }
   else { im.style.backgroundImage = ""; no.innerHTML = IC("file") + "<div>" + esc(f.n || "Документ") + "<br>Печатается страницами целиком</div>"; }
 }
 
@@ -554,7 +596,7 @@ document.addEventListener("click", (e) => { const t = e.target.closest && e.targ
 document.addEventListener("input", (e) => { const t = e.target; if (t && t.dataset && t.dataset.act === "bright") act("bright", { t: t.dataset.t, value: t.value }); });
 
 /* ---------- запуск ---------- */
-window.__app = { calcProg, act, historyHTML, controlsHTML, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
+window.__app = { calcProg, pageFids, hydrateAll, act, historyHTML, controlsHTML, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
 showTab("printer"); renderConn(); renderQueue();
 if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
 setInterval(() => { if (S) tick(); }, 500);
