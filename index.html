@@ -1,132 +1,563 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Админ-панель</title>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>Панель принтера</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#0f1220;--card:#1a1f33;--ink:#eef0fa;--mut:#8b92b0;--acc:#6c8cff;--ok:#3ddc97;--bad:#ff6b7a;--r:18px}
+:root{
+  --bg:#0a0a0b;--s1:#111113;--s2:#18181b;--s3:#212125;--line:#2a2a2f;--line2:#3a3a41;
+  --tx:#ececee;--mut:#8f8f98;--dim:#5e5e66;
+  --ok:#58cf98;--bad:#ef6471;--warn:#e3b04e;
+  --r:16px;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:radial-gradient(120% 60% at 50% -10%,#232a4d,var(--bg));color:var(--ink);font:15px/1.4 system-ui,sans-serif;min-height:100vh;padding:14px 14px 90px}
-h1{font-size:20px;margin:4px 0 12px;display:flex;align-items:center;gap:8px}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--mut);transition:.3s}.dot.on{background:var(--ok);box-shadow:0 0 10px var(--ok)}
-.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:12px;animation:up .45s both}
-@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{flex:1}
-button,.chip{font:inherit;color:var(--ink);background:#262d4a;border:0;border-radius:12px;padding:10px 12px;cursor:pointer;transition:.2s}
-button:active{transform:scale(.96)}.on{background:var(--acc)!important;color:#fff}
-.go{background:linear-gradient(90deg,#4f74ff,#8a5cff);width:100%;font-weight:600;padding:14px}.bad{background:#3a2430;color:var(--bad)}
-.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}.row>*{flex:1 1 auto;text-align:center}
-label{color:var(--mut);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
-input[type=range]{width:100%;accent-color:var(--acc)}
-input[type=text]{width:100%;background:#262d4a;border:0;border-radius:12px;padding:11px;color:var(--ink);font:inherit}
-/* принтер */
-.pr{position:relative;height:220px;display:flex;justify-content:center;overflow:hidden}
-.body{position:absolute;top:10px;width:250px;height:96px;border-radius:22px;background:linear-gradient(#3a4268,#272d4b);z-index:3;box-shadow:0 10px 24px #0006}
-.body:before{content:"";position:absolute;left:24px;right:24px;bottom:22px;height:8px;border-radius:6px;background:#0a0c16}
-.led{position:absolute;right:20px;top:16px;width:9px;height:9px;border-radius:50%;background:var(--mut)}
-.busy .led{background:var(--acc);animation:bl .6s infinite alternate}.done .led{background:var(--ok)}.err .led{background:var(--bad)}
-@keyframes bl{to{opacity:.2}}
-.out{position:absolute;top:96px;width:200px;height:120px;overflow:hidden;z-index:2}
-.sheet{width:200px;height:260px;background:#fff center/cover;border-radius:3px;box-shadow:0 4px 14px #0008;transform:translateY(-250px);transition:transform 2.5s linear}
-.sheet.bl{background-color:#e8eaf3}.busy .body{animation:vib .18s infinite}
-@keyframes vib{50%{transform:translateY(1px)}}
-.bar{height:6px;border-radius:6px;background:#262d4a;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),#a07bff);transition:width 2.5s linear}
-.big{text-align:center;font-weight:600}.sub{text-align:center;color:var(--mut);font-size:13px}
-/* очередь */
-.q{display:flex;gap:12px;align-items:center}.num{font-size:22px;font-weight:700;color:var(--acc);min-width:34px}
-.th{width:56px;height:56px;border-radius:12px;background:#262d4a center/cover;flex:none}.q .t{flex:1;min-width:0}.q b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sheetw{animation:up .35s both}.pv{width:120px;height:170px;margin:0 auto 10px;border-radius:4px;background:#262d4a center/cover;box-shadow:0 6px 18px #0008}
-.strip{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;touch-action:pan-x;display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px}.strip .th{width:52px;height:52px;border:2px solid transparent;opacity:.55;transition:.2s}.strip .th.sel{border-color:var(--acc);opacity:1;transform:scale(1.06)}
-.paper{margin:0 auto 8px;position:relative;border-radius:3px;box-shadow:0 8px 22px #000a;overflow:hidden;transition:all .4s}.paper .im{position:absolute;inset:2%;background:center/contain no-repeat;filter:url(#pf);transition:filter .2s}
-.paper .gl{position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.6) 48%,transparent 60%);pointer-events:none;transition:opacity .4s}
-.ov{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 40px}.ov .back{position:sticky;top:0;z-index:2;margin-bottom:8px}.nav{display:flex;align-items:center;gap:8px;margin:0 0 10px}.nav button{width:52px;font-size:20px}.nav .sub{flex:1}
-.hide{display:none}.mut{color:var(--mut);font-size:13px}.ca{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
-.empty{text-align:center;color:var(--mut);padding:18px}.empty span{font-size:34px;display:block;animation:fl 2.4s infinite ease-in-out}@keyframes fl{50%{transform:translateY(-6px)}}
-</style></head><body>
-<h1>🖨 Админ-панель <span id="dot" class="dot"></span></h1>
-<div class="card" id="pcard"><div class="pr" id="pr"><div class="body"><i class="led"></i></div><div class="out"><div class="sheet bl" id="sheet"></div></div></div>
-<div class="big" id="pt">Ожидает заказов</div><div class="bar"><i id="pb"></i></div><div class="sub" id="ps"></div></div>
-<div class="tabs"><button data-t="q" class="on">Очередь</button><button data-t="s">Настройки</button><button data-t="c">Соадмины</button></div>
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 var(--font);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.hide{display:none!important}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
-<div id="tq"><div id="ql"></div><div class="ov sheetw hide" id="ord"><button class="back" id="pbk">‹ Назад в очередь</button>
-<svg width="0" height="0" style="position:absolute"><filter id="pf" color-interpolation-filters="sRGB"><feColorMatrix id="fs" type="saturate" values="1"/><feComponentTransfer id="fc"><feFuncR type="gamma" exponent="1"/><feFuncG type="gamma" exponent="1"/><feFuncB type="gamma" exponent="1"/></feComponentTransfer><feComponentTransfer id="fl"><feFuncR type="linear" slope="1" intercept="0"/><feFuncG type="linear" slope="1" intercept="0"/><feFuncB type="linear" slope="1" intercept="0"/></feComponentTransfer></filter></svg>
-<div class="strip" id="ostrip"></div><div class="paper" id="opp"><div class="im" id="opv"></div><div class="gl" id="ogl"></div></div><div class="nav"><button id="pprev">‹</button><div class="sub" id="pcnt"></div><button id="pnext">›</button></div><div class="sub" id="oinfo" style="margin-bottom:10px"></div><div class="big" id="oti"></div><div class="sub" id="ofn"></div>
-<div id="ctl"></div><button class="go" id="pgo">🖨 Отправить на печать</button><div class="row"><button class="bad" id="prj">❌ Отклонить</button><button id="pcl">Закрыть</button></div></div>
-<div id="hl"></div></div>
-<div id="ts" class="hide"><div class="card"><div id="dctl"></div><div class="mut">Это настройки по умолчанию. Сохраняются при печати.</div></div></div>
-<div id="tc" class="hide"><div class="card"><b>Соадмины</b><div class="mut" style="margin:4px 0 10px">Их заказы печатаются сразу, без твоего одобрения. Введи Telegram ID (узнать: бот @userinfobot).</div>
-<div id="cl"></div><input type="text" id="cid" inputmode="numeric" placeholder="Telegram ID, например 123456789"><button class="go" id="cadd" style="margin-top:10px">Добавить соадмина</button></div></div>
+/* каркас */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 18px 10px;background:linear-gradient(var(--bg) 70%,transparent)}
+.ttl{font-size:21px;font-weight:650;letter-spacing:-.01em}
+.conn{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mut)}
+.conn i{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.conn.on i{background:var(--ok)}
+main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(10,10,11,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;color:var(--mut);border-radius:12px;transition:color .15s}
+.tabs button.on{color:var(--tx)}
+.tabs button .ic{width:23px;height:23px}
+
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.lab{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut)}
+.sec{margin:20px 4px 8px}
+.mut{color:var(--mut);font-size:13px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:14px;background:var(--tx);color:var(--bg);font-weight:600;transition:transform .1s,opacity .15s}
+.btn:active{transform:scale(.985)}
+.btn.sec2{background:var(--s3);color:var(--tx)}
+.btn.danger{background:rgba(239,100,113,.12);color:var(--bad)}
+.btn[disabled]{opacity:.45}
+.link{display:inline-flex;align-items:center;gap:7px;padding:8px 0;color:var(--mut);font-size:13.5px}
+.chip{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--s3);font-size:12px;color:var(--mut);white-space:nowrap}
+.chip.ok{background:rgba(88,207,152,.13);color:var(--ok)}.chip.stop{background:rgba(227,176,78,.13);color:var(--warn)}.chip.err{background:rgba(239,100,113,.13);color:var(--bad)}
+
+/* принтер */
+.pc{padding:18px 16px 16px}
+.pc-head{display:flex;align-items:center;gap:8px}
+.led{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.pc[data-led=busy] .led{background:var(--tx);animation:pulse 1.1s infinite alternate}
+.pc[data-led=ok] .led{background:var(--ok)}.pc[data-led=err] .led{background:var(--bad)}
+@keyframes pulse{to{opacity:.25}}
+.pc-title{font-size:19px;font-weight:620;margin:6px 0 0;letter-spacing:-.01em}
+.printer{position:relative;width:236px;height:262px;margin:12px auto 0}
+.p-body{position:absolute;left:0;right:0;top:14px;height:96px;border-radius:24px;background:linear-gradient(#2d2d32,#1c1c20);border:1px solid var(--line2);box-shadow:0 16px 28px -14px #000;z-index:3}
+.pc[data-led=busy] .p-body{animation:vib .22s infinite}
+@keyframes vib{50%{transform:translateY(1px)}}
+.p-body:before{content:"";position:absolute;left:30px;right:30px;bottom:16px;height:9px;border-radius:6px;background:#060607;box-shadow:inset 0 2px 4px #000}
+.p-led{position:absolute;right:22px;top:16px;width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.pc[data-led=busy] .p-led{background:var(--tx)}.pc[data-led=ok] .p-led{background:var(--ok)}.pc[data-led=err] .p-led{background:var(--bad)}
+.p-tray{position:absolute;left:50%;top:0;width:126px;height:26px;margin-left:-63px;border-radius:8px 8px 0 0;background:var(--s3);border:1px solid var(--line2);border-bottom:0;z-index:1}
+.sheet{position:absolute;left:50%;top:100px;width:112px;height:158px;margin-left:-56px;border-radius:2px;background:#e9e9e6;box-shadow:0 10px 24px -8px #000;z-index:2;overflow:hidden;
+  --r:0;clip-path:inset(0 0 calc(100% - (100% * var(--r))) 0);transition:clip-path 1s linear,opacity .3s;opacity:0}
+.sheet.show{opacity:1}.sheet.reset{transition:none}
+.sheet .ph{position:absolute;inset:0;background:#c9c9c6 center/cover no-repeat;opacity:0;transition:opacity .35s}.sheet .ph.ld{opacity:1}
+.sheet .ph-ic{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a86}.sheet .ph-ic .ic{width:30px;height:30px}
+.sheet .ph.ld~.ph-ic{display:none}
+.scan{position:absolute;left:50%;top:100px;width:124px;height:2px;margin-left:-62px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);z-index:4;opacity:0;transform:translateY(calc(158px * var(--r,0)));transition:transform 1s linear,opacity .3s}
+.scan.on{opacity:.9}
+.okb{position:absolute;left:50%;top:150px;width:58px;height:58px;margin-left:-29px;border-radius:50%;background:var(--ok);color:#06150d;display:grid;place-items:center;z-index:5;transform:scale(0);transition:transform .5s cubic-bezier(.2,1.4,.4,1)}
+.okb .ic{width:30px;height:30px;stroke-width:2.4}
+.pc[data-led=ok] .okb{transform:scale(1)}
+.cnt{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:4px;font-variant-numeric:tabular-nums}
+.cnt b{font-size:34px;font-weight:650;letter-spacing:-.02em}.cnt span{font-size:20px;color:var(--mut)}.cnt .pct{margin-left:10px;font-size:15px}
+.bar{height:5px;border-radius:5px;background:var(--s3);overflow:hidden;margin:10px 2px 8px}
+.bar i{display:block;height:100%;width:0;border-radius:5px;background:var(--tx);transition:width .9s linear}
+.pc[data-led=ok] .bar i{background:var(--ok)}
+.pc-sub{text-align:center;color:var(--mut);font-size:13px;min-height:19px}
+#stop{margin-top:14px;min-height:46px}
+
+/* списки */
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;margin-bottom:8px;border-radius:14px;background:var(--s1);border:1px solid var(--line)}
+.row:active{background:var(--s2)}
+.row .rt{flex:1;min-width:0}.row .rt b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row .rt span{color:var(--mut);font-size:13px}
+.row>.ic{color:var(--dim)}
+.th{position:relative;width:52px;height:52px;border-radius:11px;background:var(--s3) center/cover no-repeat;flex:none;overflow:hidden}
+.th:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.th.er{opacity:.5}.th .ic{position:absolute;inset:0;margin:auto;color:var(--dim)}
+.empty{display:grid;place-items:center;gap:8px;padding:34px 10px;color:var(--mut);text-align:center}
+.empty .ic{width:30px;height:30px;color:var(--dim)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--s3);display:grid;place-items:center;font-weight:650;font-size:16px;flex:none;border:1px solid var(--line2)}
+.person{margin-bottom:8px;border-radius:14px;background:var(--s1);border:1px solid var(--line);overflow:hidden}
+.person>.row{margin:0;border:0;border-radius:0;background:none}
+.person .chev{transition:transform .2s}.person.open .chev{transform:rotate(180deg)}
+.pbody{display:none;padding:2px 12px 12px;border-top:1px solid var(--line)}.person.open .pbody{display:block}
+.ob{padding:12px 0 4px;border-bottom:1px solid var(--line)}.ob:last-child{border-bottom:0}
+.oh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}.od{font-weight:600;font-size:14px}
+.meta{color:var(--mut);font-size:12.5px;margin-bottom:9px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.grid .th{width:auto;height:auto;aspect-ratio:1;border-radius:9px}
+
+/* настройки */
+.grp{padding:14px 0;border-bottom:1px solid var(--line)}.grp:last-child{border-bottom:0}
+.grp h3{margin:0 0 9px;font-size:13px;font-weight:600;color:var(--mut)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:3px;background:var(--s2);border-radius:12px;border:1px solid var(--line)}
+.seg button{padding:10px 4px;text-align:center;border-radius:9px;font-size:13.5px;color:var(--mut);transition:background .15s,color .15s}
+.seg button.on{background:var(--s3);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{padding:9px 13px;border-radius:11px;background:var(--s2);border:1px solid var(--line);font-size:13.5px;color:var(--mut)}
+.chips button.on{background:var(--s3);color:var(--tx);border-color:var(--line2)}
+.rng{display:flex;align-items:center;gap:12px}.rng input{flex:1;accent-color:#fff}.rng output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+.stp{display:inline-flex;align-items:center;background:var(--s2);border:1px solid var(--line);border-radius:12px}
+.stp button{width:46px;height:42px;display:grid;place-items:center;border-radius:12px}.stp button[disabled]{opacity:.3}
+.stp output{min-width:40px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.line{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.inp{width:100%;min-height:46px;padding:0 14px;border-radius:12px;background:var(--s2);border:1px solid var(--line);color:var(--tx);font:inherit}
+
+/* окна */
+.ov{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.ov-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:6px;padding:calc(10px + env(safe-area-inset-top,0px)) 10px 10px;background:linear-gradient(var(--bg) 75%,transparent)}
+.ov-top .ib{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:var(--s2)}
+.ov-top .tt{flex:1;min-width:0}.ov-top .tt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ov-top .tt span{color:var(--mut);font-size:12.5px}
+.ov-body{padding:4px 14px calc(120px + env(safe-area-inset-bottom,0px))}
+.paper{margin:4px auto 10px;position:relative;border-radius:3px;background:#efefec;box-shadow:0 12px 30px -10px #000;overflow:hidden;transition:width .3s,height .3s}
+.paper .im{position:absolute;inset:0;background:center/contain no-repeat;transition:filter .2s}
+.paper .nofile{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a86;text-align:center;font-size:13px;padding:10px}
+.strip{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
+.strip .th{width:54px;height:54px;opacity:.55;border:2px solid transparent}.strip .th.sel{opacity:1;border-color:var(--tx)}
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(10,10,11,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.actions .btn{flex:1}.actions .btn.danger{flex:0 0 auto;width:auto;padding:0 18px}
+.bub{max-width:88%;margin:0 0 8px;padding:9px 12px;border-radius:14px 14px 14px 4px;background:var(--s2);border:1px solid var(--line)}
+.bub small{display:block;color:var(--dim);font-size:11.5px;margin-top:3px}
+#viewer{background:#000;display:flex;flex-direction:column}
+#viewer .vimg{flex:1;background:center/contain no-repeat;margin:0}
+#viewer .vbar{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;color:#fff}
+#viewer .vnav{display:flex;justify-content:space-between;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+#viewer .ib{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.1)}
+.toast{position:fixed;left:14px;right:14px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:40;padding:12px 14px;border-radius:12px;background:var(--s3);border:1px solid var(--line2);box-shadow:0 10px 30px #000a}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v6H7z"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3 2.7-4.7 5.5-4.7s5 1.7 5.5 4.7"/><path d="M15.5 6a3 3 0 0 1 0 5.5M17.5 14.6c1.6.6 2.7 2 3 4.4"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10.5" r="1.6"/><path d="M20.5 16l-5-5-8 8"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3.5H7.5A1.5 1.5 0 0 0 6 5v14a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 18 19V8z"/><path d="M14 3.5V8h4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol>
+</svg>
+
+<header class="top"><div class="ttl" id="ttl">Принтер</div><div class="conn" id="conn"><i></i><span>нет связи</span></div></header>
+
+<main>
+  <section id="v-printer">
+    <div class="card pc" id="pc" data-led="idle">
+      <div class="pc-head"><i class="led"></i><span class="lab" id="pc-lab">Свободен</span></div>
+      <div class="pc-title" id="pc-title">Принтер свободен</div>
+      <div class="printer" id="printer">
+        <div class="p-tray"></div>
+        <div class="sheet" id="sheet"><div class="ph" id="sheet-ph"></div><div class="ph-ic"><svg class="ic"><use href="#i-image"/></svg></div></div>
+        <div class="scan" id="scan"></div>
+        <div class="p-body"><span class="p-led"></span></div>
+        <div class="okb"><svg class="ic"><use href="#i-check"/></svg></div>
+      </div>
+      <div class="cnt" id="cnt"><b id="cnt-k">0</b><span>/</span><span id="cnt-p">0</span><span class="pct" id="cnt-pct"></span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="pc-sub" id="pc-sub"></div>
+      <button class="btn danger hide" id="stop" data-act="stop"><svg class="ic"><use href="#i-stop"/></svg>Остановить печать</button>
+    </div>
+    <div class="sec lab" id="q-lab">Очередь</div>
+    <div id="queue"></div>
+  </section>
+  <section id="v-history" class="hide"></section>
+  <section id="v-settings" class="hide"></section>
+  <section id="v-access" class="hide"></section>
+</main>
+
+<nav class="tabs" id="tabs"></nav>
+<div class="ov hide" id="order"></div>
+<div class="ov hide" id="log"></div>
+<div class="ov hide" id="viewer"></div>
 
 <script>
-const tg=window.Telegram&&Telegram.WebApp;if(tg){tg.ready();tg.expand();try{tg.disableVerticalSwipes()}catch(e){}}
-const $=i=>document.getElementById(i),qs=new URLSearchParams(location.search);
-let TK=qs.get("tk")||(/tk=([^&]+)/.exec(location.hash)||[])[1]||localStorage.getItem("tk")||"";const AD=qs.get("a");
-try{if(TK)localStorage.setItem("tk",TK);if(qs.get("tk"))history.replaceState(null,"",location.pathname)}catch(e){}
-const api="https://api.telegram.org/bot"+TK,QL={low:"Минимальное",medium:"Среднее",high:"Высокое"};
-const PAPERS={a4:"A4",a5:"A5",b5:"B5",letter:"Letter","10x15":"10×15","13x18":"13×18"},MEDIA={plain:"Обычная",matte:"Матовая",glossy:"Глянцевая",semi:"Полуглянец",driver:"Как в драйвере"};
-let lastK="",S=null,cur=null,dr=null,tab="q";const img={};
-function pic(fid){if(!fid||!TK)return Promise.resolve("");return img[fid]||(img[fid]=(async()=>{try{const r=await(await fetch(api+"/getFile?file_id="+encodeURIComponent(fid))).json();return"https://api.telegram.org/file/bot"+TK+"/"+r.result.file_path}catch(e){delete img[fid];return""}})())}
-function seg(id,opts,val,on){return'<div class="row" id="'+id+'">'+Object.entries(opts).map(([k,v])=>'<button data-k="'+k+'" class="'+(k==val?"on":"")+'">'+v+'</button>').join("")+'</div>'}
-function controls(d,pre){return'<label>Качество</label>'+seg(pre+"q",QL,d.q)+'<label>Режим листа</label>'+seg(pre+"s",{1:"Целиком",0:"На весь лист"},d.s?1:0)+
-'<label>Размер бумаги</label>'+seg(pre+"p",PAPERS,d.p)+'<label>Тип бумаги</label>'+seg(pre+"m",MEDIA,d.m)+
-'<label>Яркость: <b id="'+pre+'bv">'+d.b+'%</b></label><input type="range" min="0" max="100" value="'+d.b+'" id="'+pre+'b">'+
-'<label>Копий</label><div class="row"><button id="'+pre+'-">−</button><button id="'+pre+'n" style="flex:2">'+d.c+'</button><button id="'+pre+'+">+</button></div>'}
-function bind(d,pre,after){const g=i=>$(pre+i);
- [["q",v=>d.q=v],["s",v=>d.s=v==="1"],["p",v=>d.p=v],["m",v=>d.m=v]].forEach(([k,f])=>g(k).onclick=e=>{const b=e.target.closest("button");if(!b)return;f(b.dataset.k);[...g(k).children].forEach(c=>c.classList.toggle("on",c===b));tg&&tg.HapticFeedback&&tg.HapticFeedback.selectionChanged();after&&after()});
- g("b").oninput=e=>{d.b=+e.target.value;g("bv").textContent=d.b+"%";after&&after()};
- g("-").onclick=()=>{d.c=Math.max(1,d.c-1);g("n").textContent=d.c};g("+").onclick=()=>{d.c=Math.min(99,d.c+1);g("n").textContent=d.c}}
-function filt(b){return"brightness("+(1+b/160).toFixed(2)+") contrast("+(1-b/700).toFixed(2)+")"}
-function send(o){if(tg)tg.sendData(JSON.stringify(o));else alert(JSON.stringify(o))}
-function renderQ(){const q=S.q;$("ql").innerHTML=q.length?q.map((o,i)=>'<div class="card q" data-o="'+o.o+'" style="animation-delay:'+i*70+'ms"><div class="num">'+(i+1)+'</div><div class="th" data-f="'+(o.f[0]||"")+'"></div><div class="t"><b>'+(o.t||"Заказ")+'</b><span class="mut">#'+o.o+' · файлов: '+o.n+'</span></div><span>›</span></div>').join(""):'<div class="card empty"><span>🕊</span>Очередь пуста</div>';
- document.querySelectorAll(".th").forEach(async e=>{const u=await pic(e.dataset.f);if(u)e.style.backgroundImage="url("+u+")"});
- document.querySelectorAll(".q").forEach(e=>e.onclick=()=>openOrd(e.dataset.o));
- $("hl").innerHTML=S.h.length?'<div class="mut" style="margin:8px 4px">Недавно</div>'+S.h.map(h=>'<div class="mut" style="padding:3px 4px">'+(h.ok?"✅":"⚠️")+" #"+h.o+" · "+h.t+"</div>").join(""):""}
-const MP={plain:[.85,.92,"#efeee6",0],matte:[.95,.97,"#f7f6f0",0],glossy:[1.12,1.08,"#fff",.9],semi:[1.06,1.04,"#fdfdfb",.4],driver:[1,1,"#fff",0]};
-const PS={a4:[210,297],a5:[148,210],b5:[176,250],letter:[216,279],"10x15":[100,150],"13x18":[130,180]};let sel=0;
-function prev(){const[sat,ct,pc,gl]=MP[dr.m]||MP.driver,[w,h]=PS[dr.p]||PS.a4,H=Math.min(250,320*h/w),W=H*w/h;
- const p=$("opp");p.style.width=W+"px";p.style.height=H+"px";p.style.background=pc;$("fs").setAttribute("values",sat);
- document.querySelectorAll("#fc>*").forEach(f=>f.setAttribute("exponent",1-dr.b/200));
- document.querySelectorAll("#fl>*").forEach(f=>{f.setAttribute("slope",ct);f.setAttribute("intercept",.5-.5*ct)});
- $("opv").style.backgroundSize=dr.s?"contain":"cover";$("ogl").style.opacity=gl;
- $("oinfo").textContent=PAPERS[dr.p]+" · "+MEDIA[dr.m]+" · яркость "+dr.b+"% · так примерно выйдет на бумаге"}
-async function showSel(){$("pcnt").textContent=cur&&cur.f.length?"Фото "+(sel+1)+" из "+cur.f.length:"Нет превью";const u=cur&&await pic(cur.f[sel]);$("opv").style.backgroundImage=u?"url("+u+")":""}
-async function openOrd(id){const o=S.q.find(x=>x.o===id);if(!o){cur=null;$("ord").classList.add("hide");return}
- if(!cur||cur.o!==id){cur=o;dr={...S.d,c:1};sel=0}
- $("ord").classList.remove("hide");$("oti").textContent=o.t||"Заказ";$("ofn").textContent="#"+o.o+" · файлов: "+o.n+(o.f.length<o.n?" (превью есть у "+o.f.length+")":"");
- $("ostrip").innerHTML=o.f.map((x,i)=>'<div class="th'+(i==sel?" sel":"")+'" data-i="'+i+'"></div>').join("");
- $("ostrip").querySelectorAll(".th").forEach(async e=>{const u=await pic(o.f[+e.dataset.i]);if(u)e.style.backgroundImage="url("+u+")";
-  e.onclick=()=>{sel=+e.dataset.i;$("ostrip").querySelectorAll(".th").forEach(x=>x.classList.toggle("sel",x===e));showSel()}});
- $("ctl").innerHTML=controls(dr,"o");bind(dr,"o",prev);prev();showSel();$("ord").scrollTop=0;document.body.style.overflow="hidden";try{tg.BackButton.show();tg.BackButton.onClick(closeOrd)}catch(e){}}
-$("pgo").onclick=()=>{if(cur)send({a:"print",o:cur.o,q:dr.q,s:dr.s,c:dr.c,b:dr.b,p:dr.p,m:dr.m})};
-$("prj").onclick=()=>{if(cur)send({a:"reject",o:cur.o})};function closeOrd(){cur=null;$("ord").classList.add("hide");document.body.style.overflow="";try{tg.BackButton.hide();tg.BackButton.offClick(closeOrd)}catch(e){}}
-$("pcl").onclick=$("pbk").onclick=closeOrd;
-function go(d){if(!cur||!cur.f.length)return;sel=(sel+d+cur.f.length)%cur.f.length;$("ostrip").querySelectorAll(".th").forEach((x,i)=>x.classList.toggle("sel",i===sel));showSel()}
-$("pprev").onclick=()=>go(-1);$("pnext").onclick=()=>go(1);let tx=null;
-$("opp").ontouchstart=e=>{tx=e.touches[0].clientX};$("opp").ontouchend=e=>{if(tx!==null){const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>40)go(d<0?1:-1)}tx=null};
-let dd=null;function renderS(){if(dd)return;dd={...S.d,c:1};$("dctl").innerHTML=controls(dd,"d").replace(/<label>Копий[\s\S]*$/,"");bind(dd,"d")}
-function renderC(){if(!$("cl"))return;$("cl").innerHTML=S.ca.length?S.ca.map(i=>'<div class="ca"><span>👤 '+i+'</span><button class="bad" data-i="'+i+'">Убрать</button></div>').join(""):'<div class="mut" style="padding:6px 0">Пока никого</div>';
- $("cl").querySelectorAll("button").forEach(b=>b.onclick=()=>send({a:"coadmin",op:"del",id:+b.dataset.i}))}
-$("cadd").onclick=()=>{const v=+$("cid").value.trim();if(v>0)send({a:"coadmin",op:"add",id:v})};
-document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));["q","s","c"].forEach(t=>$("t"+t)&&$("t"+t).classList.toggle("hide",t!==tab))});
-if(qs.get("r")==="co"){document.querySelector("[data-t=c]").remove();$("tc").remove()}
-/* принтер: анимация */
-const EST=30;let lastFid="";
-let mp=0,mo="",lastFr=0,fr=0;
-async function tick(){const n=S&&S.now,pr=$("pr"),sh=$("sheet");pr.className="pr";if(!n||n.o!==mo){mp=0;mo=n?n.o:""}let p=0,t="Ожидает заказов",s="",y=-250;
- if(n){const P=Math.max(1,n.P||1);
-  if(n.st==="dl"){t="Скачиваю файлы…";p=.02;pr.classList.add("busy")}
-  else if(n.st==="wait"||n.st==="print"||n.st==="render"){pr.classList.add("busy");const rd=n.st==="render",el=n.t0?Math.max(0,Date.now()/1e3-n.t0):0;
-   p=n.pr!=null?n.pr:(rd?.05:.5+Math.min(.3,el/(P*240)));p=Math.max(p,mp);mp=p;
-   const q=rd?0:Math.max(0,(p-.5)*2),x=Math.min(.999,q)*P,pg=Math.min(P,Math.floor(x)+1);fr=x-Math.floor(x);y=-250+fr*250;
-   t=rd?"Готовлю страницы…":"Печатаю заказ #"+n.o;s=(rd?"Подготовлено "+Math.round(p*200)+"%":"Страница "+pg+" из "+P+" · печать "+Math.round(q*100)+"%")+" · общий прогресс "+Math.round(p*100)+"%"}
-  else if(n.st==="done"){pr.classList.add("done");p=1;y=-20;t="✅ Готово! Заказ #"+n.o}
-  else{pr.classList.add("err");t="⚠️ Ошибка печати"}
-  if(n.f&&n.f!==lastFid){lastFid=n.f;const u=await pic(n.f);sh.classList.toggle("bl",!u);sh.style.backgroundImage=u?"url("+u+")":""}
- }else lastFid="";
- const back=fr<lastFr-.3;if(back)sh.style.transition="none";sh.style.transform="translateY("+y+"px)";if(back){sh.offsetHeight;sh.style.transition=""}lastFr=fr;void 0;$("pb").style.width=p*100+"%";$("pt").textContent=t;$("ps").textContent=s;$("dot").classList.toggle("on",!!S)}
-async function poll(){try{const r=await(await fetch(api+"/getChat?chat_id="+AD)).json();const m=r.result&&r.result.pinned_message;
- if(m){S=JSON.parse(m.text.split("\n")[1]);const k=JSON.stringify([S.q,S.h,S.ca]);
-  if(k!==lastK){lastK=k;renderQ();renderC()}renderS();if(cur&&!S.q.find(x=>x.o===cur.o))closeOrd()}}catch(e){}tick()}
-if(!TK||!AD)$("pt").textContent="Открой приложение кнопкой «🖨 Админ-панель» в чате с ботом";
-poll();setInterval(poll,2500);setInterval(()=>S&&tick(),1000);
-</script></body></html>
+"use strict";
+const tg = window.Telegram && window.Telegram.WebApp;
+try { if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor("#0a0a0b"); tg.setBackgroundColor && tg.setBackgroundColor("#0a0a0b"); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } } catch (e) {}
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const qs = new URLSearchParams(location.search);
+
+/* ---------- токен (нужен только чтобы читать состояние и показывать фото) ---------- */
+const TOKEN_RE = /^\d{6,}:[\w-]{30,}$/;
+function readToken() {
+  let t = qs.get("tk") || "";
+  if (!t) { const m = /(?:^#|&)tk=([^&]+)/.exec(location.hash || ""); if (m) { try { t = decodeURIComponent(m[1]); } catch (e) {} } }
+  if (!TOKEN_RE.test(t)) { try { t = localStorage.getItem("tk") || ""; } catch (e) { t = ""; } }
+  return TOKEN_RE.test(t) ? t : "";
+}
+const TK = readToken();
+try { if (TK) localStorage.setItem("tk", TK); if (qs.get("tk")) { qs.delete("tk"); history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "")); } } catch (e) {}
+const VIEWER = qs.get("a") || "";
+const ADMIN = qs.get("r") !== "co";
+const API = "https://api.telegram.org/bot" + TK;
+
+/* ---------- словари (ключи как в bot.py) ---------- */
+const QL = { low: "Минимальное", medium: "Среднее", high: "Высокое" };
+const PAPERS = { a4: ["A4", 210, 297], a5: ["A5", 148, 210], b5: ["B5", 176, 250], letter: ["Letter", 216, 279], "10x15": ["10×15 см", 100, 150], "13x18": ["13×18 см", 130, 180] };
+const MEDIA = { driver: "Как в драйвере", plain: "Обычная", matte: "Матовая", glossy: "Глянцевая", semi: "Полуглянец" };
+const MODES = { 1: "Целиком", 0: "На весь лист" };
+const RES = { ok: ["Напечатано", "ok"], stop: ["Остановлено", "stop"], err: ["Ошибка", "err"] };
+const MON = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+
+const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const IC = (n, cls) => '<svg class="ic' + (cls ? " " + cls : "") + '"><use href="#i-' + n + '"/></svg>';
+const plural = (n, f) => n + " " + (n % 10 === 1 && n % 100 !== 11 ? f[0] : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? f[1] : f[2]);
+const files = (n) => plural(n, ["файл", "файла", "файлов"]);
+const photos = (n) => plural(n, ["фото", "фото", "фото"]);
+function fmtTs(ts) { const d = new Date(ts * 1000), p = (x) => String(x).padStart(2, "0"); return d.getDate() + " " + MON[d.getMonth()] + ", " + p(d.getHours()) + ":" + p(d.getMinutes()); }
+function fmtDay(ts) { const d = new Date(ts * 1000); return d.getDate() + " " + MON[d.getMonth()]; }
+
+/* ---------- прогресс: чистая функция, один в один с логикой бота ---------- */
+/* n - состояние печати из бота; recvAt - когда оно получено; el у бота = секунд с начала печати на момент публикации */
+const mono = { o: "", v: 0 };
+function calcProg(n, recvAt, nowMs) {
+  const P = n.P || 0, out = { st: n.st, P, pages: 0, pr: 0, k: 0, cur: 0, fr: 0 };
+  if (n.st === "done") { out.pages = P; }
+  else if (n.st === "print" && P > 0) {
+    const el = (n.el || 0) + Math.max(0, nowMs - recvAt) / 1000;
+    out.pages = Math.max(n.d || 0, Math.min(el / Math.max(0.01, n.spp || 40), P - 0.02));
+  } else if (n.st === "stop" || n.st === "err") { out.pages = Math.min(P, n.d || 0); }
+  else { out.pages = Math.min(P, n.d || 0); }
+  if (n.st === "print" || n.st === "render") {   // прогресс только растёт
+    if (mono.o !== n.o) { mono.o = n.o; mono.v = 0; }
+    out.pages = Math.max(out.pages, mono.v); mono.v = out.pages;
+  }
+  out.pr = P ? Math.min(1, out.pages / P) : 0;
+  out.k = Math.floor(out.pages + 1e-9);
+  out.cur = P ? Math.min(P - 1, out.k) : 0;
+  out.fr = n.st === "done" ? 1 : (out.pages - Math.floor(out.pages));
+  return out;
+}
+
+/* ---------- данные: состояние (закреплённое сообщение) и файл истории ---------- */
+let S = null, DOC = null, docVer = -1, recvAt = 0, online = false, loadingDoc = false, docErr = false;
+async function api(method, params) { const r = await fetch(API + "/" + method + "?" + new URLSearchParams(params || {})); return r.json(); }
+const pathCache = new Map(), urlCache = new Map();
+async function fileUrl(fid) {
+  if (!fid || !TK) return "";
+  if (pathCache.has(fid)) return pathCache.get(fid);
+  for (let a = 0; a < 3; a++) {
+    try {
+      const r = await api("getFile", { file_id: fid });
+      if (r.ok) { const u = "https://api.telegram.org/file/bot" + TK + "/" + r.result.file_path; pathCache.set(fid, u); return u; }
+      if (r.error_code === 400 || r.error_code === 401) break;
+    } catch (e) {}
+    await sleep(400 * (a + 1));
+  }
+  return "";
+}
+/* картинка: с повторами, проверкой загрузки и кэшем - чтобы фото не «то грузится, то нет» */
+function loadImg(fid) {
+  if (!fid) return Promise.resolve("");
+  if (urlCache.has(fid)) return urlCache.get(fid);
+  const p = (async () => {
+    for (let a = 0; a < 3; a++) {
+      const u = await fileUrl(fid);
+      if (u) {
+        const ok = await new Promise((res) => { const i = new Image(); i.onload = () => res(true); i.onerror = () => res(false); i.src = u; });
+        if (ok) return u;
+        pathCache.delete(fid);
+      }
+      await sleep(500 * (a + 1));
+    }
+    return "";
+  })();
+  urlCache.set(fid, p);
+  p.then((u) => { if (!u) urlCache.delete(fid); });
+  return p;
+}
+let running = 0; const waitq = [];
+function queued(fn) { return new Promise((res) => { const go = async () => { running++; try { res(await fn()); } finally { running--; if (waitq.length) waitq.shift()(); } }; running < 4 ? go() : waitq.push(go); }); }
+async function hydrate(el) { const u = await queued(() => loadImg(el.dataset.f)); if (u) { el.style.backgroundImage = 'url("' + u + '")'; el.classList.add("ld"); } else el.classList.add("er"); }
+const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); hydrate(e.target); } }), { rootMargin: "250px" }) : null;
+function hydrateAll(root) { if (!root || !root.querySelectorAll) return; root.querySelectorAll("[data-f]:not([data-h])").forEach((el) => { el.dataset.h = "1"; io ? io.observe(el) : hydrate(el); }); }
+
+async function poll() {
+  try {
+    const r = await api("getChat", { chat_id: VIEWER });
+    const m = r.result && r.result.pinned_message;
+    if (m && m.text) { S = JSON.parse(m.text.split("\n")[1]); recvAt = Date.now(); online = true; onState(); }
+    else online = false;
+  } catch (e) { online = false; }
+  renderConn();
+}
+async function loadDoc() {
+  if (!S || !S.hd || loadingDoc) return;
+  loadingDoc = true;
+  try {
+    const u = await fileUrl(S.hd), r = await fetch(u, { cache: "no-store" });
+    DOC = await r.json(); docVer = S.hv; docErr = false; renderAll(true);
+  } catch (e) { docErr = true; } finally { loadingDoc = false; }
+}
+let sigQ = "";
+function onState() {
+  if (S.hv !== docVer) loadDoc();
+  const sig = JSON.stringify([S.q, S.ca, S.d, S.hv]);
+  if (sig !== sigQ) { sigQ = sig; renderAll(); }
+  const o = OR.id && S.q.find((x) => x.o === OR.id);
+  if (OR.id && !o && !OR.sending) closeOrder();
+  tick();
+}
+
+/* ---------- вкладки ---------- */
+const TABS = ADMIN ? [["printer", "Принтер", "printer"], ["history", "История", "history"], ["settings", "Настройки", "sliders"], ["access", "Доступ", "users"]]
+                   : [["printer", "Принтер", "printer"], ["history", "Мои печати", "history"]];
+let tab = "printer";
+function renderTabs() {
+  $("tabs").innerHTML = TABS.map(([k, t, i]) => '<button data-act="tab" data-k="' + k + '" class="' + (k === tab ? "on" : "") + '">' + IC(i) + "<span>" + t + "</span></button>").join("");
+}
+function showTab(k) {
+  tab = k; $("ttl").textContent = (TABS.find((t) => t[0] === k) || TABS[0])[1];
+  ["printer", "history", "settings", "access"].forEach((t) => $("v-" + t).classList.toggle("hide", t !== k));
+  renderTabs();
+}
+
+/* ---------- принтер: анимация и прогресс ---------- */
+let shown = { key: "", fid: "" };
+function pageFid(n, cur) {
+  const a = DOC && DOC.active && DOC.active.o === n.o ? DOC.active : null;
+  if (a && a.pm && a.pm[cur] != null && a.pm[cur] >= 0 && a.fs[a.pm[cur]]) { const f = a.fs[a.pm[cur]]; return (f.k === "p" || f.k === "i") ? (f.th || f.f) : ""; }
+  return cur === 0 ? (n.th0 || "") : "";
+}
+function tick() {
+  const pc = $("pc"); if (!pc) return;
+  const n = S && S.now;
+  let led = "idle", lab = "Свободен", title = "Принтер свободен", sub = "", k = 0, P = 0, pct = "", pr = 0, stop = false, fr = 0, sheet = false, scan = false, fid = "", key = "";
+  if (!S) { title = "Нет связи"; lab = "Офлайн"; sub = TK ? "Жду данные от бота…" : "Открой приложение кнопкой «Панель принтера» в чате с ботом."; }
+  else if (n && n.busy) { led = "busy"; lab = "Занят"; title = "Принтер занят"; sub = "Печатается заказ другого человека"; }
+  else if (n) {
+    const p = calcProg(n, recvAt, Date.now()); P = p.P; k = p.k; pr = p.pr;
+    const who = n.t ? n.t : "";
+    if (n.st === "dl") { led = "busy"; lab = "Подготовка"; title = "Скачиваю файлы"; sub = (n.dl || 0) + " из " + (n.dn || 0) + (who ? " · " + who : ""); stop = true; k = 0; }
+    else if (n.st === "render") { led = "busy"; lab = "Подготовка"; title = "Готовлю страницы"; sub = "Передано в очередь: " + (n.rd || 0) + " из " + P; stop = true; k = 0; pct = "0%"; }
+    else if (n.st === "print") { led = "busy"; lab = "Печать"; title = "Идёт печать"; sub = (who ? who + " · " : "") + "заказ #" + n.o; stop = true; pct = Math.round(pr * 100) + "%"; sheet = true; scan = true; fr = p.fr; fid = pageFid(n, p.cur); key = n.o + ":" + p.cur + ":" + (fid ? 1 : 0); }
+    else if (n.st === "done") { led = "ok"; lab = "Готово"; title = "Готово"; sub = "Напечатано " + P + " из " + P + (who ? " · " + who : ""); pct = "100%"; pr = 1; k = P; sheet = true; fr = 1; fid = pageFid(n, Math.max(0, P - 1)); key = n.o + ":" + Math.max(0, P - 1) + ":" + (fid ? 1 : 0); }
+    else if (n.st === "stop") { lab = "Остановлено"; title = "Печать остановлена"; sub = "Напечатано " + (n.d || 0) + " из " + P; k = n.d || 0; pr = P ? k / P : 0; pct = Math.round(pr * 100) + "%"; }
+    else { led = "err"; lab = "Ошибка"; title = "Ошибка печати"; sub = "Подробности в чате с ботом"; }
+  } else if (S.q && S.q.length) { lab = "Свободен"; title = "Принтер свободен"; sub = "Ждут: " + S.q.length; }
+  pc.dataset.led = led; $("pc-lab").textContent = lab; $("pc-title").textContent = title; $("pc-sub").textContent = sub;
+  $("cnt-k").textContent = k; $("cnt-p").textContent = P; $("cnt-pct").textContent = pct;
+  $("cnt").style.visibility = (n && !n.busy && P > 0 && n.st !== "dl") ? "visible" : "hidden";
+  $("bar").style.width = Math.round(pr * 1000) / 10 + "%";
+  $("stop").classList.toggle("hide", !stop);
+  const sh = $("sheet");
+  if (key !== shown.key) {   // началась новая страница: сбрасываем лист и подгружаем фото
+    sh.classList.add("reset"); sh.style.setProperty("--r", "0"); $("scan").style.setProperty("--r", "0"); $("sheet-ph").classList.remove("ld"); $("sheet-ph").style.backgroundImage = "";
+    void sh.offsetWidth; sh.classList.remove("reset");
+    shown = { key, fid };
+    if (fid) { const my = key; loadImg(fid).then((u) => { if (shown.key === my && u) { $("sheet-ph").style.backgroundImage = 'url("' + u + '")'; $("sheet-ph").classList.add("ld"); } }); }
+    if (S && n && n.st === "print") { const a = DOC && DOC.active; if (a && a.pm) [1, 2].forEach((d) => { const f = pageFid(n, Math.min(P - 1, calcProg(n, recvAt, Date.now()).cur + d)); if (f) loadImg(f); }); }
+  }
+  sh.classList.toggle("show", sheet); sh.style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); $("scan").style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); $("scan").classList.toggle("on", scan && fr > 0 && fr < 0.995);
+}
+
+/* ---------- очередь, история, настройки, доступ ---------- */
+function pendingDoc(o) { return DOC && (DOC.pending || []).find((x) => x.o === o); }
+function renderQueue() {
+  const q = (S && S.q) || [];
+  $("q-lab").classList.toggle("hide", false);
+  $("queue").innerHTML = q.length ? q.map((o) =>
+    '<button class="row" data-act="open" data-o="' + esc(o.o) + '"><div class="th" data-f="' + esc((o.th && o.th[0]) || "") + '">' + ((o.th && o.th[0]) ? "" : IC("image")) + '</div>' +
+    '<div class="rt"><b>' + esc(o.t || "Заказ") + "</b><span>" + files(o.n) + " · #" + esc(o.o) + "</span></div>" +
+    (o.w ? '<span class="chip">ждёт принтер</span>' : "") + IC("chev") + "</button>").join("")
+    : '<div class="empty">' + IC("queue") + "<div>Очередь пуста</div></div>";
+  hydrateAll($("queue"));
+}
+let openP = new Set();
+function personStats(p) { let f = 0; (p.orders || []).forEach((o) => (o.fs || []).forEach(() => f++)); return { f, o: (p.orders || []).length, last: (p.orders && p.orders[0] && p.orders[0].ts) || 0 }; }
+function metaLine(s, c) { if (!s) return ""; return [QL[s.quality] || "", MODES[s.smart ? 1 : 0], (PAPERS[s.paper] || [s.paper])[0], MEDIA[s.media] || "", "яркость " + (s.bright || 0) + "%", c > 1 ? "копий " + c : ""].filter(Boolean).join(" · "); }
+function historyHTML() {
+  if (!S) return '<div class="empty">' + IC("history") + "<div>Нет связи с ботом</div></div>";
+  if (!DOC) return '<div class="empty">' + IC("history") + "<div>" + (docErr ? "Не удалось загрузить историю. Попробую снова." : "Загружаю историю…") + "</div></div>";
+  const people = Object.entries(DOC.people || {}).map(([id, p]) => [id, p, personStats(p)]).filter((x) => x[2].o).sort((a, b) => b[2].last - a[2].last);
+  if (!people.length) return '<div class="empty">' + IC("history") + "<div>" + (ADMIN ? "Пока никто ничего не печатал" : "Ты ещё ничего не печатал") + "</div></div>";
+  const single = !ADMIN && people.length === 1;
+  return people.map(([id, p, st]) => {
+    const open = single || openP.has(id);
+    const head = '<button class="row" data-act="person" data-p="' + esc(id) + '"><div class="av">' + esc((p.name || "?").trim().charAt(0).toUpperCase()) + "</div>" +
+      '<div class="rt"><b>' + esc(p.name || "Без имени") + "</b><span>" + photos(st.f) + " · " + plural(st.o, ["заказ", "заказа", "заказов"]) + " · " + fmtDay(st.last) + "</span></div>" + IC("down", "chev") + "</button>";
+    const body = open ? p.orders.map((o) => {
+      const r = RES[o.res] || RES.err;
+      const th = (o.fs || []).map((f, i) => ((f.k === "p" || f.k === "i")
+        ? '<div class="th" data-act="view" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"></div>'
+        : '<div class="th" title="' + esc(f.n) + '">' + IC("file") + "</div>")).join("");
+      return '<div class="ob"><div class="oh"><span class="od">' + fmtTs(o.ts) + " · #" + esc(o.o) + '</span><span class="chip ' + r[1] + '">' + r[0] + "</span></div>" +
+        '<div class="meta">' + esc(metaLine(o.s, o.c)) + '</div><div class="grid">' + th + "</div>" +
+        (ADMIN && (o.log || []).length ? '<button class="link" data-act="clog" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '">' + IC("eye") + "Что видел клиент</button>" : "") + "</div>";
+    }).join("") : "";
+    return '<div class="person' + (open ? " open" : "") + '">' + head + '<div class="pbody">' + body + "</div></div>";
+  }).join("");
+}
+function renderHistory() { const el = $("v-history"); el.innerHTML = '<div class="sec lab">' + (ADMIN ? "Кто что печатал" : "Мои печати") + "</div>" + historyHTML(); hydrateAll(el); }
+
+let DF = { q: "medium", s: true, b: 35, p: "a4", m: "matte", c: 1 }, dfInit = false;
+function seg(t, k, opts, val) { return '<div class="seg">' + Object.entries(opts).map(([v, l]) => '<button data-act="set" data-t="' + t + '" data-k="' + k + '" data-v="' + esc(v) + '" class="' + (String(v) === String(val) ? "on" : "") + '">' + esc(l) + "</button>").join("") + "</div>"; }
+function chips(t, k, opts, val) { return '<div class="chips">' + Object.entries(opts).map(([v, l]) => '<button data-act="set" data-t="' + t + '" data-k="' + k + '" data-v="' + esc(v) + '" class="' + (v === val ? "on" : "") + '">' + esc(l) + "</button>").join("") + "</div>"; }
+function controlsHTML(t, d, withCopies) {
+  const paperOpts = {}; Object.keys(PAPERS).forEach((k) => (paperOpts[k] = PAPERS[k][0]));
+  return '<div class="grp"><h3>Качество печати</h3>' + seg(t, "q", QL, d.q) + "</div>" +
+    '<div class="grp"><h3>Как разместить на листе</h3>' + seg(t, "s", { 1: "Целиком", 0: "На весь лист" }, d.s ? 1 : 0) + "</div>" +
+    '<div class="grp"><h3>Размер бумаги</h3>' + chips(t, "p", paperOpts, d.p) + "</div>" +
+    '<div class="grp"><h3>Тип бумаги</h3>' + chips(t, "m", MEDIA, d.m) + '<div class="mut" style="margin-top:8px">Выбирай ту бумагу, что лежит в лотке: фотобумага на обычной бумаге даёт тёмную печать.</div></div>' +
+    '<div class="grp"><h3>Яркость</h3><div class="rng"><input type="range" min="0" max="100" step="5" value="' + d.b + '" data-act="bright" data-t="' + t + '" aria-label="Яркость"><output id="bv-' + t + '">' + d.b + "%</output></div></div>" +
+    (withCopies ? '<div class="grp"><div class="line"><h3 style="margin:0">Копий</h3><div class="stp"><button data-act="copies" data-d="-1" aria-label="Меньше"' + (d.c <= 1 ? " disabled" : "") + ">" + IC("minus") + "</button><output>" + d.c + '</output><button data-act="copies" data-d="1" aria-label="Больше"' + (d.c >= 99 ? " disabled" : "") + ">" + IC("plus") + "</button></div></div></div>" : "");
+}
+function renderSettings() {
+  if (!ADMIN) return;
+  if (!dfInit && S) { DF = { ...S.d, c: 1 }; dfInit = true; }
+  $("v-settings").innerHTML = '<div class="sec lab">Настройки по умолчанию</div><div class="card">' + controlsHTML("df", DF, false) + '</div><button class="btn" data-act="savedef">Сохранить</button>' +
+    '<p class="mut" style="text-align:center;margin-top:14px">Версия бота ' + esc(S ? S.v : "") + "</p>";
+}
+function renderAccess() {
+  if (!ADMIN) return;
+  const ca = (S && S.ca) || [];
+  $("v-access").innerHTML = '<div class="sec lab">Соадмины</div><div class="card"><div class="mut" style="margin-bottom:10px">Соадмин печатает сам: присылает файлы, жмёт «Готово» и выбирает настройки в сообщении. Видит только свои заказы.</div>' +
+    (ca.length ? ca.map((c) => '<div class="line" style="padding:8px 0"><div><b>' + esc(c.n || "Без имени") + '</b><div class="mut">' + esc(c.id) + '</div></div><button class="chip err" data-act="coDel" data-id="' + esc(c.id) + '">Убрать</button></div>').join("") : '<div class="mut" style="padding:6px 0">Пока никого</div>') +
+    '<input class="inp" id="co-id" inputmode="numeric" placeholder="Telegram ID, например 123456789" style="margin-top:12px"><button class="btn" data-act="coAdd" style="margin-top:10px">' + IC("plus") + 'Добавить соадмина</button></div>' +
+    '<div class="sec lab">Глазами клиента</div><div class="card"><div class="mut" style="margin-bottom:12px">Включает режим, в котором бот выглядит так же, как для обычного человека: то же меню и те же сообщения. Выйти: команда /asadmin.</div><button class="btn sec2" data-act="asClient">' + IC("eye") + "Открыть как клиент</button></div>";
+}
+function renderAll(docOnly) {
+  renderQueue(); renderHistory(); if (!docOnly) { renderSettings(); renderAccess(); }
+  const open = OR.id && pendingDoc(OR.id);
+  if (open && docOnly) { const changed = JSON.stringify([OR.files.length, OR.log]) !== JSON.stringify([open.fs.length, open.log || []]); if (changed) { OR.files = open.fs; OR.log = open.log || []; renderOrderBody(); } }
+}
+function renderConn() {
+  const c = $("conn"); c.classList.toggle("on", online); c.lastChild.textContent = online ? "на связи" : "нет связи";
+}
+
+/* ---------- заказ: превью, настройки, печать, «глазами клиента» ---------- */
+const OR = { id: "", files: [], sel: 0, dr: null, sending: false, log: [] };
+function openOrder(id, keep) {
+  const q = S && S.q.find((x) => x.o === id); if (!q) return;
+  const d = pendingDoc(id);
+  if (!keep || !OR.dr) OR.dr = { ...S.d, c: 1 };
+  OR.id = id; OR.files = d ? d.fs : []; OR.log = d ? d.log || [] : []; if (!keep) OR.sel = 0; OR.sending = false;
+  const el = $("order"); el.classList.remove("hide"); document.body.style.overflow = "hidden";
+  el.innerHTML = '<div class="ov-top"><button class="ib" data-act="closeOrder" aria-label="Назад">' + IC("left") + '</button><div class="tt"><b>' + esc(q.t || "Заказ") + "</b><span>#" + esc(id) + " · " + files(q.n) + '</span></div></div>' +
+    '<div class="ov-body"><div class="paper" id="paper"><div class="im" id="p-im"></div><div class="nofile" id="p-no"></div></div>' +
+    '<div class="strip" id="strip"></div><div class="mut" id="p-cnt" style="text-align:center;margin-bottom:6px"></div>' +
+    '<div class="card" id="ctl"></div>' + (ADMIN ? '<div class="sec lab">Что видит клиент</div><div id="clog"></div>' : "") + "</div>" +
+    (q.w ? '<div class="actions"><div class="mut" style="flex:1;text-align:center;padding:14px 0">Заказ ждёт своей очереди на принтер</div></div>'
+          : '<div class="actions"><button class="btn danger" data-act="reject">' + IC("x") + "Отклонить</button><button class=\"btn\" data-act=\"print\">" + IC("printer") + "Печать</button></div>");
+  renderOrderBody();
+  if (tg && tg.BackButton) { try { tg.BackButton.show(); tg.BackButton.onClick(closeOrder); } catch (e) {} }
+}
+function closeOrder() {
+  OR.id = ""; OR.dr = null; OR.files = []; $("order").classList.add("hide"); $("order").innerHTML = ""; document.body.style.overflow = "";
+  if (tg && tg.BackButton) { try { tg.BackButton.hide(); tg.BackButton.offClick(closeOrder); } catch (e) {} }
+}
+function renderOrderBody() {
+  const d = OR.dr; if (!d || !$("ctl")) return;
+  $("ctl").innerHTML = controlsHTML("dr", d, true);
+  $("strip").innerHTML = OR.files.map((f, i) => ((f.k === "p" || f.k === "i")
+    ? '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"></div>'
+    : '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '">' + IC("file") + "</div>")).join("");
+  hydrateAll($("strip")); paintPreview();
+  if (ADMIN && $("clog")) $("clog").innerHTML = OR.log.length ? OR.log.map((l) => '<div class="bub">' + esc(l[1]) + "<small>" + fmtTs(l[0]) + "</small></div>").join("") : '<div class="mut">Пока ничего не отправлено</div>';
+}
+function paintPreview() {
+  const d = OR.dr, pp = PAPERS[d.p] || PAPERS.a4, H = Math.min(280, 340 * pp[2] / pp[1]), W = H * pp[1] / pp[2];
+  const p = $("paper"); p.style.width = W + "px"; p.style.height = H + "px";
+  const f = OR.files[OR.sel], im = $("p-im"), no = $("p-no");
+  im.style.backgroundSize = d.s ? "contain" : "cover"; im.style.filter = "brightness(" + (1 + d.b / 160).toFixed(2) + ") contrast(" + (1 - d.b / 700).toFixed(2) + ")";
+  $("p-cnt").textContent = OR.files.length ? "Файл " + (OR.sel + 1) + " из " + OR.files.length : "";
+  if (!f) { im.style.backgroundImage = ""; no.innerHTML = OR.files.length ? "" : "Превью загружается…"; return; }
+  if (f.k === "p" || f.k === "i") { no.innerHTML = ""; const my = OR.id + ":" + OR.sel; im.dataset.k = my; loadImg(f.f).then((u) => { if (im.dataset.k === my) im.style.backgroundImage = u ? 'url("' + u + '")' : ""; }); }
+  else { im.style.backgroundImage = ""; no.innerHTML = IC("file") + "<div>" + esc(f.n || "Документ") + "<br>Печатается страницами целиком</div>"; }
+}
+
+/* ---------- просмотр фото и журнал клиента ---------- */
+const VW = { list: [], i: 0 };
+function openViewer(pid, oid, i) {
+  const p = DOC && DOC.people[pid], o = p && p.orders.find((x) => x.o === oid); if (!o) return;
+  VW.list = o.fs.filter((f) => f.k === "p" || f.k === "i"); VW.i = Math.max(0, VW.list.findIndex((f) => f === o.fs[i]));
+  const v = $("viewer"); v.classList.remove("hide"); document.body.style.overflow = "hidden";
+  v.innerHTML = '<div class="vbar"><span id="v-c"></span><button class="ib" data-act="closeViewer" aria-label="Закрыть">' + IC("x") + '</button></div><div class="vimg" id="v-img"></div><div class="vnav"><button class="ib" data-act="vprev" aria-label="Назад">' + IC("left") + '</button><button class="ib" data-act="vnext" aria-label="Вперёд">' + IC("chev") + "</button></div>";
+  showViewer();
+}
+function showViewer() {
+  if (!VW.list.length) return; VW.i = (VW.i + VW.list.length) % VW.list.length;
+  $("v-c").textContent = (VW.i + 1) + " / " + VW.list.length; const img = $("v-img"), f = VW.list[VW.i]; img.style.backgroundImage = ""; const my = VW.i;
+  loadImg(f.th || f.f).then((u) => { if (VW.i === my && u) img.style.backgroundImage = 'url("' + u + '")'; });
+  loadImg(f.f).then((u) => { if (VW.i === my && u) img.style.backgroundImage = 'url("' + u + '")'; });
+}
+function closeViewer() { $("viewer").classList.add("hide"); $("viewer").innerHTML = ""; document.body.style.overflow = $("order").classList.contains("hide") ? "" : "hidden"; }
+function openLog(pid, oid) {
+  const p = DOC && DOC.people[pid], o = p && p.orders.find((x) => x.o === oid); if (!o) return;
+  const el = $("log"); el.classList.remove("hide"); document.body.style.overflow = "hidden";
+  el.innerHTML = '<div class="ov-top"><button class="ib" data-act="closeLog" aria-label="Назад">' + IC("left") + '</button><div class="tt"><b>Что видел клиент</b><span>' + esc(p.name) + " · #" + esc(oid) + '</span></div></div><div class="ov-body">' +
+    (o.log.length ? o.log.map((l) => '<div class="bub">' + esc(l[1]) + "<small>" + fmtTs(l[0]) + "</small></div>").join("") : '<div class="mut">Журнал пуст</div>') + "</div>";
+}
+
+/* ---------- действия ---------- */
+let toastT;
+function toast(text) { let t = document.querySelector(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "alert"); document.body.appendChild(t); } t.textContent = text; clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 5000); }
+function send(obj) {
+  if (!tg || typeof tg.sendData !== "function") { toast("Открой приложение кнопкой «Панель принтера» в чате с ботом."); return false; }
+  try { tg.sendData(JSON.stringify(obj)); } catch (e) { toast("Не получилось отправить: " + e.message); return false; }
+  setTimeout(() => { OR.sending = false; toast("Не отправилось. Закрой приложение и открой его кнопкой «Панель принтера» (не из сообщения)."); }, 3000);
+  return true;
+}
+function confirmThen(msg, fn) { if (tg && tg.showConfirm) tg.showConfirm(msg, (ok) => ok && fn()); else if (confirm(msg)) fn(); }
+const target = (t) => (t === "dr" ? OR.dr : DF);
+function act(name, d) {
+  switch (name) {
+    case "tab": showTab(d.k); break;
+    case "open": openOrder(d.o); break;
+    case "closeOrder": closeOrder(); break;
+    case "sel": OR.sel = +d.i; $("strip").querySelectorAll(".th").forEach((e, i) => e.classList.toggle("sel", i === OR.sel)); paintPreview(); break;
+    case "set": { const o = target(d.t); if (!o) break; const v = d.v; if (d.k === "s") o.s = v === "1"; else o[d.k] = v; if (d.t === "dr") renderOrderBody(); else renderSettings(); break; }
+    case "bright": { const o = target(d.t); if (o) { o.b = +d.value; const out = $("bv-" + d.t); if (out) out.textContent = o.b + "%"; if (d.t === "dr") paintPreview(); } break; }
+    case "copies": if (OR.dr) { OR.dr.c = Math.max(1, Math.min(99, OR.dr.c + +d.d)); renderOrderBody(); } break;
+    case "print": if (OR.id && !OR.sending) { OR.sending = true; const x = OR.dr; if (!send({ a: "print", o: OR.id, q: x.q, s: x.s, c: x.c, b: x.b, p: x.p, m: x.m })) OR.sending = false; } break;
+    case "reject": if (OR.id) confirmThen("Отклонить заказ? Клиент получит уведомление.", () => send({ a: "reject", o: OR.id })); break;
+    case "stop": confirmThen("Остановить печать? Задание будет удалено из очереди принтера.", () => send({ a: "stop" })); break;
+    case "person": if (openP.has(d.p)) openP.delete(d.p); else openP.add(d.p); renderHistory(); break;
+    case "view": openViewer(d.p, d.o, +d.i); break;
+    case "closeViewer": closeViewer(); break;
+    case "vprev": VW.i--; showViewer(); break;
+    case "vnext": VW.i++; showViewer(); break;
+    case "clog": openLog(d.p, d.o); break;
+    case "closeLog": $("log").classList.add("hide"); $("log").innerHTML = ""; document.body.style.overflow = $("order").classList.contains("hide") ? "" : "hidden"; break;
+    case "savedef": send({ a: "defaults", q: DF.q, s: DF.s, b: DF.b, p: DF.p, m: DF.m }); break;
+    case "coAdd": { const v = +(($("co-id") && $("co-id").value) || "").trim(); if (v > 0) send({ a: "coadmin", op: "add", id: v }); else toast("Введи Telegram ID: число из цифр"); break; }
+    case "coDel": confirmThen("Убрать соадмина?", () => send({ a: "coadmin", op: "del", id: +d.id })); break;
+    case "asClient": confirmThen("Включить режим клиента? Бот будет выглядеть как для обычного человека. Выйти: /asadmin.", () => send({ a: "asclient" })); break;
+  }
+}
+document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-act]"); if (t && t.tagName !== "INPUT") { act(t.dataset.act, t.dataset); } });
+document.addEventListener("input", (e) => { const t = e.target; if (t && t.dataset && t.dataset.act === "bright") act("bright", { t: t.dataset.t, value: t.value }); });
+
+/* ---------- запуск ---------- */
+window.__app = { calcProg, act, historyHTML, controlsHTML, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
+showTab("printer"); renderConn(); renderQueue();
+if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
+setInterval(() => { if (S) tick(); }, 500);
+</script>
+</body>
+</html>
