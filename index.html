@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --bg:#0a0a0b;--s1:#111113;--s2:#18181b;--s3:#212125;--line:#2a2a2f;--line2:#3a3a41;
+  --bg:#0b0b0b;--s1:#121212;--s2:#171717;--s3:#1f1f1f;--line:#252525;--line2:#333333;
   --tx:#ececee;--mut:#8f8f98;--dim:#5e5e66;
   --ok:#58cf98;--bad:#ef6471;--warn:#e3b04e;
   --r:16px;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -29,7 +29,7 @@ button:focus-visible,input:focus-visible{outline:2px solid #fff;outline-offset:2
 .conn i{width:7px;height:7px;border-radius:50%;background:var(--dim)}
 .conn.on i{background:var(--ok)}
 main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(10,10,11,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(11,11,11,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 .tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11px;color:var(--mut);border-radius:12px;transition:color .15s}
 .tabs button.on{color:var(--tx)}
 .tabs button .ic{width:23px;height:23px}
@@ -56,13 +56,17 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 @keyframes pulse{to{opacity:.25}}
 .pc-title{font-size:19px;font-weight:620;margin:6px 0 0;letter-spacing:-.01em}
 .printer{position:relative;width:236px;height:268px;margin:12px auto 0}
-.p-body{position:absolute;left:0;right:0;top:14px;height:96px;border-radius:24px;background:linear-gradient(#2d2d32,#1c1c20);border:1px solid var(--line2);box-shadow:0 16px 28px -14px #000;z-index:3}
+.printer svg{display:block;position:absolute}
+.p-tray{left:53px;top:0;width:130px;height:34px;z-index:1}
+.p-body{left:0;top:14px;width:236px;height:100px;z-index:3;filter:drop-shadow(0 16px 20px rgba(0,0,0,.55))}
+.p-outtray{left:23px;top:112px;width:190px;height:40px;z-index:1}
 .pc[data-led=busy] .p-body{animation:vib .22s infinite}
 @keyframes vib{50%{transform:translateY(1px)}}
-.p-body:before{content:"";position:absolute;left:30px;right:30px;bottom:16px;height:9px;border-radius:6px;background:#060607;box-shadow:inset 0 2px 4px #000}
-.p-led{position:absolute;right:22px;top:16px;width:7px;height:7px;border-radius:50%;background:var(--dim)}
-.pc[data-led=busy] .p-led{background:var(--tx)}.pc[data-led=ok] .p-led{background:var(--ok)}.pc[data-led=err] .p-led{background:var(--bad)}
-.p-tray{position:absolute;left:50%;top:0;width:126px;height:26px;margin-left:-63px;border-radius:8px 8px 0 0;background:var(--s3);border:1px solid var(--line2);border-bottom:0;z-index:1}
+.led-dot{fill:#4a4a4a;transition:fill .3s}.led-glow{fill:transparent;transition:fill .3s}
+.pc[data-on="1"] .led-dot{fill:#3f9b72}.pc[data-on="1"] .led-glow{fill:rgba(63,155,114,.55)}
+.pc[data-led=busy] .led-dot{fill:#fff;animation:pulse 1.1s infinite alternate}.pc[data-led=busy] .led-glow{fill:rgba(255,255,255,.4)}
+.pc[data-led=ok] .led-dot{fill:var(--ok)}.pc[data-led=ok] .led-glow{fill:rgba(88,207,152,.7)}
+.pc[data-led=err] .led-dot{fill:var(--bad);animation:pulse .6s infinite alternate}.pc[data-led=err] .led-glow{fill:rgba(239,100,113,.7)}
 .p-out{position:absolute;left:50%;top:108px;width:150px;height:158px;margin-left:-75px;overflow:hidden;z-index:2}
 .sheet{position:absolute;left:50%;top:0;width:106px;height:150px;margin-left:-53px;border-radius:2px;background:#e9e9e6;box-shadow:0 8px 18px -6px #000;overflow:hidden;
   --r:0;transform:translateY(calc((var(--r) - 1) * 100%));transition:transform 1s linear,opacity .25s;opacity:0}
@@ -80,7 +84,19 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 .bar i{display:block;height:100%;width:0;border-radius:5px;background:var(--tx);transition:width .9s linear}
 .pc[data-led=ok] .bar i{background:var(--ok)}
 .pc-sub{text-align:center;color:var(--mut);font-size:13px;min-height:19px}
-#stop{margin-top:14px;min-height:46px}
+/* группа кнопок: общая рамка, разделители, одинаковые состояния hover / active / disabled */
+.bgrp{display:flex;width:100%;border:1px solid var(--line2);border-radius:14px;background:var(--s2);overflow:hidden}
+.bgrp>button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:0 8px;font-size:13.5px;font-weight:550;color:var(--tx);transition:background .16s,color .16s,transform .12s,opacity .16s}
+.bgrp>button+button{border-left:1px solid var(--line2)}
+.bgrp>button .ic{width:18px;height:18px;transition:transform .2s}
+@media (hover:hover){.bgrp>button:not([disabled]):hover{background:var(--s3)}.bgrp>button:not([disabled]):hover .ic{transform:translateY(-1px) scale(1.1)}}
+.bgrp>button:not([disabled]):active{transform:scale(.96);background:#262626}
+.bgrp>button[disabled]{opacity:.38;cursor:default}
+.bgrp>button.danger:not([disabled]){color:var(--bad)}
+.bgrp>button.danger:not([disabled]):active{background:rgba(239,100,113,.16)}
+.bgrp>button.on{background:var(--tx);color:var(--bg)}
+.bgrp .bdg{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--tx);color:var(--bg);font-size:11px;font-weight:700;display:inline-grid;place-items:center}
+#qa{margin-top:14px}
 
 /* списки */
 .row{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;margin-bottom:8px;border-radius:14px;background:var(--s1);border:1px solid var(--line)}
@@ -89,7 +105,7 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 .row>.ic{color:var(--dim)}
 .th{position:relative;width:52px;height:52px;border-radius:11px;background:var(--s3) center/cover no-repeat;flex:none;overflow:hidden}
 .th:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
-.th.er{opacity:.5}.th .ic{position:absolute;inset:0;margin:auto;color:var(--dim)}
+.th.more{display:grid;place-items:center;color:var(--mut);font-size:13px;font-weight:600}.th.er{opacity:.5}.th .ic{position:absolute;inset:0;margin:auto;color:var(--dim)}
 .empty{display:grid;place-items:center;gap:8px;padding:34px 10px;color:var(--mut);text-align:center}
 .empty .ic{width:30px;height:30px;color:var(--dim)}
 .av{width:42px;height:42px;border-radius:50%;background:var(--s3);display:grid;place-items:center;font-weight:650;font-size:16px;flex:none;border:1px solid var(--line2)}
@@ -105,9 +121,12 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 /* настройки */
 .grp{padding:14px 0;border-bottom:1px solid var(--line)}.grp:last-child{border-bottom:0}
 .grp h3{margin:0 0 9px;font-size:13px;font-weight:600;color:var(--mut)}
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:3px;background:var(--s2);border-radius:12px;border:1px solid var(--line)}
-.seg button{padding:10px 4px;text-align:center;border-radius:9px;font-size:13.5px;color:var(--mut);transition:background .15s,color .15s}
-.seg button.on{background:var(--s3);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}
+.seg{display:flex;border:1px solid var(--line2);border-radius:14px;background:var(--s2);overflow:hidden}
+.seg button{flex:1;padding:12px 4px;text-align:center;font-size:13.5px;color:var(--mut);transition:background .16s,color .16s,transform .12s}
+.seg button+button{border-left:1px solid var(--line2)}
+@media (hover:hover){.seg button:not(.on):hover{background:var(--s3);color:var(--tx)}}
+.seg button:active{transform:scale(.96)}
+.seg button.on{background:var(--tx);color:var(--bg);font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{padding:9px 13px;border-radius:11px;background:var(--s2);border:1px solid var(--line);font-size:13.5px;color:var(--mut)}
 .chips button.on{background:var(--s3);color:var(--tx);border-color:var(--line2)}
 .rng{display:flex;align-items:center;gap:12px}.rng input{flex:1;accent-color:#fff}.rng output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
@@ -128,7 +147,7 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 .paper .nofile{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a86;text-align:center;font-size:13px;padding:10px}
 .strip{display:flex;gap:7px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
 .strip .th{width:54px;height:54px;opacity:.55;border:2px solid transparent}.strip .th.sel{opacity:1;border-color:var(--tx)}
-.actions{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(10,10,11,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(11,11,11,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
 .actions .btn{flex:1}.actions .btn.danger{flex:0 0 auto;width:auto;padding:0 18px}
 .bub{max-width:88%;margin:0 0 8px;padding:9px 12px;border-radius:14px 14px 14px 4px;background:var(--s2);border:1px solid var(--line)}
 .bub small{display:block;color:var(--dim);font-size:11.5px;margin-top:3px}
@@ -138,6 +157,19 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 #viewer .vnav{display:flex;justify-content:space-between;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
 #viewer .ib{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.1)}
 .toast{position:fixed;left:14px;right:14px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:40;padding:12px 14px;border-radius:12px;background:var(--s3);border:1px solid var(--line2);box-shadow:0 10px 30px #000a}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.enter{animation:rise .32s ease both}
+.row{transition:background .15s,transform .12s,border-color .15s}
+@media (hover:hover){.row:hover{border-color:var(--line2);background:var(--s2)}}
+.row:active{transform:scale(.99)}
+.btn{transition:transform .12s,opacity .15s,background .15s,filter .15s}
+@media (hover:hover){.btn:not([disabled]):hover{filter:brightness(1.08)}}
+.chips button{transition:background .16s,color .16s,border-color .16s,transform .12s}.chips button:active{transform:scale(.96)}
+@media (hover:hover){.chips button:not(.on):hover{background:var(--s3);color:var(--tx)}}
+.tabs button .ic{transition:transform .2s}.tabs button.on .ic{transform:translateY(-1px) scale(1.1)}
+.stp button{transition:background .15s,transform .12s}.stp button:not([disabled]):active{transform:scale(.9);background:var(--s3)}
+.person .chev{transition:transform .22s}
+.bar i{transition:width .9s linear,background .3s}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -170,15 +202,42 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
       <div class="pc-head"><i class="led"></i><span class="lab" id="pc-lab">Свободен</span></div>
       <div class="pc-title" id="pc-title">Принтер свободен</div>
       <div class="printer" id="printer">
-        <div class="p-tray"></div>
+        <svg class="p-tray" viewBox="0 0 130 34" aria-hidden="true">
+          <path d="M10 34 L20 6 Q22 2 27 2 H103 Q108 2 110 6 L120 34 Z" fill="#1b1b1b" stroke="#363636"/>
+          <rect x="30" y="8" width="70" height="26" rx="2" fill="#e4e4e1"/><rect x="33" y="5" width="64" height="4" rx="1" fill="#cdcdc9"/>
+          <path d="M40 16h50M40 22h38" stroke="#c2c2be" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <svg class="p-outtray" viewBox="0 0 190 40" aria-hidden="true">
+          <path d="M6 4 H184 L176 33 Q175 38 170 38 H20 Q15 38 14 33 Z" fill="#141414" stroke="#303030"/><path d="M20 29 H170" stroke="#262626" stroke-width="2" stroke-linecap="round"/>
+        </svg>
         <div class="p-out"><div class="sheet" id="sheet"><div class="ph" id="sheet-ph"></div><div class="ph-ic"><svg class="ic"><use href="#i-image"/></svg></div></div></div>
-        <div class="p-body"><span class="p-led"></span></div>
+        <svg class="p-body" viewBox="0 0 236 100" aria-hidden="true">
+          <defs>
+            <linearGradient id="g-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#333"/><stop offset="1" stop-color="#171717"/></linearGradient>
+            <linearGradient id="g-lid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d3d3d"/><stop offset="1" stop-color="#272727"/></linearGradient>
+            <filter id="f-glow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="2.4"/></filter>
+          </defs>
+          <rect x=".5" y=".5" width="235" height="99" rx="22" fill="url(#g-body)" stroke="#3b3b3b"/>
+          <path d="M22 1.5H214A20.5 20.5 0 0 1 234.5 22V30H1.5V22A20.5 20.5 0 0 1 22 1.5Z" fill="url(#g-lid)" opacity=".7"/>
+          <path d="M14 30.5H222" stroke="#0c0c0c" stroke-width="1.6"/><path d="M14 32H222" stroke="#444" stroke-width=".8" opacity=".6"/>
+          <rect x="18" y="40" width="86" height="25" rx="7" fill="#0e0e0e" stroke="#2c2c2c"/>
+          <g opacity=".8"><rect x="27" y="46" width="13" height="13" rx="2.5" fill="#4a9fc0"/><rect x="45" y="46" width="13" height="13" rx="2.5" fill="#c1578a"/><rect x="63" y="46" width="13" height="13" rx="2.5" fill="#cfae49"/><rect x="81" y="46" width="13" height="13" rx="2.5" fill="#8d8d8d"/></g>
+          <rect x="146" y="40" width="74" height="25" rx="8" fill="#101010" stroke="#2c2c2c"/>
+          <circle cx="159" cy="52.5" r="4.2" fill="#262626" stroke="#3c3c3c"/><circle cx="173" cy="52.5" r="4.2" fill="#262626" stroke="#3c3c3c"/>
+          <circle class="led-glow" cx="204" cy="52.5" r="6" filter="url(#f-glow)"/><circle class="led-dot" cx="204" cy="52.5" r="3.3"/>
+          <rect x="30" y="77" width="176" height="11" rx="5.5" fill="#050505"/><rect x="30" y="77" width="176" height="3" rx="1.5" fill="#000" opacity=".7"/>
+        </svg>
         <div class="okb"><svg class="ic"><use href="#i-check"/></svg></div>
       </div>
       <div class="cnt" id="cnt"><b id="cnt-k">0</b><span>/</span><span id="cnt-p">0</span><span class="pct" id="cnt-pct"></span></div>
       <div class="bar"><i id="bar"></i></div>
       <div class="pc-sub" id="pc-sub"></div>
-      <button class="btn danger hide" id="stop" data-act="stop"><svg class="ic"><use href="#i-stop"/></svg>Остановить печать</button>
+      <div class="bgrp" id="qa" role="group" aria-label="Быстрые действия">
+        <button id="stop" class="danger" data-act="stop" aria-label="Остановить печать" disabled><svg class="ic"><use href="#i-stop"/></svg><span>Стоп</span></button>
+        <button data-act="goqueue" aria-label="Очередь"><svg class="ic"><use href="#i-queue"/></svg><span>Очередь</span><b class="bdg hide" id="qn">0</b></button>
+        <button data-act="tab" data-k="history"><svg class="ic"><use href="#i-history"/></svg><span>История</span></button>
+        <button data-act="tab" data-k="settings" id="qa-set"><svg class="ic"><use href="#i-sliders"/></svg><span>Настройки</span></button>
+      </div>
     </div>
     <div class="sec lab" id="q-lab">Очередь</div>
     <div id="queue"></div>
@@ -196,7 +255,7 @@ main{padding:2px 14px calc(92px + env(safe-area-inset-bottom,0px))}
 <script>
 "use strict";
 const tg = window.Telegram && window.Telegram.WebApp;
-try { if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor("#0a0a0b"); tg.setBackgroundColor && tg.setBackgroundColor("#0a0a0b"); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } } catch (e) {}
+try { if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor("#0b0b0b"); tg.setBackgroundColor && tg.setBackgroundColor("#0b0b0b"); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } } catch (e) {}
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const qs = new URLSearchParams(location.search);
@@ -257,7 +316,7 @@ function calcProg(n, recvAt, nowMs) {
 }
 
 /* ---------- данные: состояние (закреплённое сообщение) и файл истории ---------- */
-let S = null, DOC = null, docVer = -1, recvAt = 0, online = false, loadingDoc = false, docErr = false;
+let S = null, DOC = null, docVer = -1, recvAt = 0, online = false, loadingDoc = false;
 async function api(method, params) { const r = await fetch(API + "/" + method + "?" + new URLSearchParams(params || {})); return r.json(); }
 const pathCache = new Map(), urlCache = new Map(), dimCache = new Map(), dead = new Set();
 async function fileUrl(fid) {
@@ -319,18 +378,47 @@ async function poll() {
   } catch (e) { online = false; }
   renderConn();
 }
-async function loadDoc() {
-  if (!S || !S.hd || loadingDoc) return;
+/* файл истории: сначала обычным запросом, а если браузер не пускает (CORS) - подключаем как скрипт (так CORS не нужен) */
+function parseDoc(t) {
+  const a = t.indexOf("("), b = t.lastIndexOf(")");
+  return JSON.parse(t.trimStart().startsWith("window.__PD") && a >= 0 && b > a ? t.slice(a + 1, b) : t);
+}
+function scriptDoc(url) {
+  return new Promise((res, rej) => {
+    let done = false; window.__PD = (o) => { done = true; res(o); };
+    const sc = document.createElement("script");
+    sc.src = url + (url.indexOf("?") >= 0 ? "&" : "?") + "t=" + Date.now();
+    sc.onerror = () => rej(new Error("браузер не пустил скрипт"));
+    sc.onload = () => { if (!done) rej(new Error("файл истории пуст")); if (sc.remove) sc.remove(); };
+    (document.head || document.body).appendChild(sc);
+  });
+}
+async function fetchDoc(url) {
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return parseDoc(await r.text());
+  } catch (e) {
+    try { return await scriptDoc(url); } catch (e2) { throw new Error((e && e.message) ? e.message + "; " + e2.message : e2.message); }
+  }
+}
+let docFail = "", docNext = 0;
+async function loadDoc(force) {
+  if (!S || loadingDoc) return;
+  if (!S.hd) { docFail = ""; return; }   // бот ещё не создал файл: пока покажем краткую историю из состояния
+  if (!force && Date.now() < docNext) return;
   loadingDoc = true;
   try {
-    const u = await fileUrl(S.hd), r = await fetch(u, { cache: "no-store" });
-    DOC = await r.json(); docVer = S.hv; docErr = false; renderAll(true);
-  } catch (e) { docErr = true; } finally { loadingDoc = false; }
+    const u = await fileUrl(S.hd);
+    if (!u) throw new Error("Telegram не отдал файл истории");
+    DOC = await fetchDoc(u); docVer = S.hv; docFail = ""; renderAll(true);
+  } catch (e) { docFail = (e && e.message) || String(e); docNext = Date.now() + 8000; renderHistory(); }
+  finally { loadingDoc = false; }
 }
 let sigQ = "";
 function onState() {
   if (S.hv !== docVer) loadDoc();
-  const sig = JSON.stringify([S.q, S.ca, S.d, S.hv]);
+  const sig = JSON.stringify([S.q, S.ca, S.d, S.hv, S.h]);
   if (sig !== sigQ) { sigQ = sig; renderAll(); }
   const o = OR.id && S.q.find((x) => x.o === OR.id);
   if (OR.id && !o && !OR.sending) closeOrder();
@@ -346,7 +434,7 @@ function renderTabs() {
 }
 function showTab(k) {
   tab = k; $("ttl").textContent = (TABS.find((t) => t[0] === k) || TABS[0])[1];
-  ["printer", "history", "settings", "access"].forEach((t) => $("v-" + t).classList.toggle("hide", t !== k));
+  ["printer", "history", "settings", "access"].forEach((t) => { const v = $("v-" + t); v.classList.toggle("hide", t !== k); if (t === k) { v.classList.remove("enter"); void v.offsetWidth; v.classList.add("enter"); } });
   renderTabs();
 }
 
@@ -405,12 +493,14 @@ function tick() {
     else if (n.st === "done") { led = "ok"; lab = "Готово"; title = "Готово"; sub = "Напечатано " + P + " из " + P + (who ? " · " + who : ""); pct = "100%"; pr = 1; k = P; sheet = true; fr = 1; fids = pageFids(n, Math.max(0, P - 1)); key = n.o + ":" + Math.max(0, P - 1) + ":" + (fids.length ? 1 : 0); }
     else if (n.st === "stop") { lab = "Остановлено"; title = "Печать остановлена"; sub = "Напечатано " + (n.d || 0) + " из " + P; k = n.d || 0; pr = P ? k / P : 0; pct = Math.round(pr * 100) + "%"; }
     else { led = "err"; lab = "Ошибка"; title = "Ошибка печати"; sub = "Подробности в чате с ботом"; }
-  } else if (S.q && S.q.length) { lab = "Свободен"; title = "Принтер свободен"; sub = "Ждут: " + S.q.length; }
+  } else { lab = "На связи · свободен"; title = "Принтер свободен"; sub = S.q && S.q.length ? "Ждут: " + S.q.length : ""; }
   pc.dataset.led = led; $("pc-lab").textContent = lab; $("pc-title").textContent = title; $("pc-sub").textContent = sub;
   $("cnt-k").textContent = k; $("cnt-p").textContent = P; $("cnt-pct").textContent = pct;
   $("cnt").style.visibility = (n && !n.busy && P > 0 && n.st !== "dl") ? "visible" : "hidden";
   $("bar").style.width = Math.round(pr * 1000) / 10 + "%";
-  $("stop").classList.toggle("hide", !stop);
+  $("stop").disabled = !stop;
+  const qn = S && S.q ? S.q.length : 0; $("qn").textContent = String(qn); $("qn").classList.toggle("hide", !qn);
+  pc.dataset.on = online ? "1" : "0";
   if (key !== shown.key && key !== pendingKey) { pendingKey = key; swapSheet(key, fids, n).then(() => { pendingKey = ""; }, () => { pendingKey = ""; }); }
   if (!swapping) { const sh = $("sheet"); sh.classList.toggle("show", sheet); sh.style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); }
 }
@@ -427,16 +517,30 @@ function renderQueue() {
     : '<div class="empty">' + IC("queue") + "<div>Очередь пуста</div></div>";
   hydrateAll($("queue"));
 }
-let openP = new Set();
-function personStats(p) { let f = 0; (p.orders || []).forEach((o) => (o.fs || []).forEach(() => f++)); return { f, o: (p.orders || []).length, last: (p.orders && p.orders[0] && p.orders[0].ts) || 0 }; }
-function metaLine(s, c) { if (!s) return ""; return [QL[s.quality] || "", MODES[s.smart ? 1 : 0], (PAPERS[s.paper] || [s.paper])[0], MEDIA[s.media] || "", "яркость " + (s.bright || 0) + "%", c > 1 ? "копий " + c : ""].filter(Boolean).join(" · "); }
+let openP = new Set(), autoOpened = false;
+const cnt = (o) => (o.n != null ? o.n : (o.fs || []).length);
+function personStats(p) { let f = 0; (p.orders || []).forEach((o) => { f += cnt(o); }); return { f, o: (p.orders || []).length, last: (p.orders && p.orders[0] && p.orders[0].ts) || 0 }; }
+function metaLine(s, c) { if (!s) return c > 1 ? "копий " + c : ""; return [QL[s.quality] || "", MODES[s.smart ? 1 : 0], (PAPERS[s.paper] || [s.paper])[0], MEDIA[s.media] || "", "яркость " + (s.bright || 0) + "%", c > 1 ? "копий " + c : ""].filter(Boolean).join(" · "); }
+/* краткая история из самого состояния: работает, даже если файл истории не загрузился */
+function fallbackPeople() {
+  const people = {};
+  ((S && S.h) || []).forEach((h) => {
+    const id = String(h.p), p = (people[id] = people[id] || { name: (S.pn && S.pn[id]) || "Без имени", orders: [] });
+    p.orders.push({ o: h.o, ts: h.ts, res: ["ok", "stop", "err"][h.r] || "err", c: h.c, s: null, n: h.k, brief: true, fs: (h.t || []).map((f) => ({ f, th: f, k: "p", n: "" })), log: [] });
+  });
+  return people;
+}
 function historyHTML() {
-  if (!S) return '<div class="empty">' + IC("history") + "<div>Нет связи с ботом</div></div>";
-  if (!DOC) return '<div class="empty">' + IC("history") + "<div>" + (docErr ? "Не удалось загрузить историю. Попробую снова." : "Загружаю историю…") + "</div></div>";
-  const people = Object.entries(DOC.people || {}).map(([id, p]) => [id, p, personStats(p)]).filter((x) => x[2].o).sort((a, b) => b[2].last - a[2].last);
-  if (!people.length) return '<div class="empty">' + IC("history") + "<div>" + (ADMIN ? "Пока никто ничего не печатал" : "Ты ещё ничего не печатал") + "</div></div>";
+  const none = (t) => '<div class="empty">' + IC("history") + "<div>" + t + "</div></div>";
+  if (!S) return none("Нет связи с ботом");
+  const src = DOC ? DOC.people : ((S.h && S.h.length) ? fallbackPeople() : null);
+  if (!src) return docFail ? none("Не удалось загрузить историю<br><small>" + esc(docFail) + '</small><br><button class="link" data-act="reloadDoc">Повторить</button>') : (S.hd ? none("Загружаю историю…") : none(ADMIN ? "Пока никто ничего не печатал" : "Ты ещё ничего не печатал"));
+  const people = Object.entries(src || {}).map(([id, p]) => [id, p, personStats(p)]).filter((x) => x[2].o).sort((a, b) => b[2].last - a[2].last);
+  if (!people.length) return none(ADMIN ? "Пока никто ничего не печатал" : "Ты ещё ничего не печатал");
+  const banner = !DOC ? '<div class="card" style="padding:12px 14px"><div class="mut">Показаны последние заказы' + (docFail ? ". Полная история не загрузилась: " + esc(docFail) : ". Полная история загружается…") + '</div><button class="link" data-act="reloadDoc">Обновить</button></div>' : "";
   const single = !ADMIN && people.length === 1;
-  return people.map(([id, p, st]) => {
+  if (!autoOpened) { autoOpened = true; openP.add(people[0][0]); }   // самый свежий человек раскрыт сразу: видно, что напечатано последним
+  return banner + people.map(([id, p, st]) => {
     const open = single || openP.has(id);
     const head = '<button class="row" data-act="person" data-p="' + esc(id) + '"><div class="av">' + esc((p.name || "?").trim().charAt(0).toUpperCase()) + "</div>" +
       '<div class="rt"><b>' + esc(p.name || "Без имени") + "</b><span>" + photos(st.f) + " · " + plural(st.o, ["заказ", "заказа", "заказов"]) + " · " + fmtDay(st.last) + "</span></div>" + IC("down", "chev") + "</button>";
@@ -444,7 +548,7 @@ function historyHTML() {
       const r = RES[o.res] || RES.err;
       const th = (o.fs || []).map((f, i) => ((f.k === "p" || f.k === "i")
         ? '<div class="th" data-act="view" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"' + (f.th ? ' data-f2="' + esc(f.f) + '"' : "") + "></div>"
-        : '<div class="th" title="' + esc(f.n) + '">' + IC("file") + "</div>")).join("");
+        : '<div class="th" title="' + esc(f.n) + '">' + IC("file") + "</div>")).join("") + (o.brief && cnt(o) > (o.fs || []).length ? '<div class="th more">+' + (cnt(o) - (o.fs || []).length) + "</div>" : "");
       return '<div class="ob"><div class="oh"><span class="od">' + fmtTs(o.ts) + " · #" + esc(o.o) + '</span><span class="chip ' + r[1] + '">' + r[0] + "</span></div>" +
         '<div class="meta">' + esc(metaLine(o.s, o.c)) + '</div><div class="grid">' + th + "</div>" +
         (ADMIN && (o.log || []).length ? '<button class="link" data-act="clog" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '">' + IC("eye") + "Что видел клиент</button>" : "") + "</div>";
@@ -452,7 +556,7 @@ function historyHTML() {
     return '<div class="person' + (open ? " open" : "") + '">' + head + '<div class="pbody">' + body + "</div></div>";
   }).join("");
 }
-function renderHistory() { const el = $("v-history"); el.innerHTML = '<div class="sec lab">' + (ADMIN ? "Кто что печатал" : "Мои печати") + "</div>" + historyHTML(); hydrateAll(el); }
+function renderHistory() { const el = $("v-history"); if (!el) return; el.innerHTML = '<div class="sec lab">' + (ADMIN ? "Кто что печатал" : "Мои печати") + "</div>" + historyHTML(); hydrateAll(el); }
 
 let DF = { q: "medium", s: true, b: 35, p: "a4", m: "matte", c: 1 }, dfInit = false;
 function seg(t, k, opts, val) { return '<div class="seg">' + Object.entries(opts).map(([v, l]) => '<button data-act="set" data-t="' + t + '" data-k="' + k + '" data-v="' + esc(v) + '" class="' + (String(v) === String(val) ? "on" : "") + '">' + esc(l) + "</button>").join("") + "</div>"; }
@@ -536,7 +640,7 @@ function paintPreview() {
 /* ---------- просмотр фото и журнал клиента ---------- */
 const VW = { list: [], i: 0 };
 function openViewer(pid, oid, i) {
-  const p = DOC && DOC.people[pid], o = p && p.orders.find((x) => x.o === oid); if (!o) return;
+  const src = DOC ? DOC.people : fallbackPeople(), p = src[pid], o = p && p.orders.find((x) => x.o === oid); if (!o) return;
   VW.list = o.fs.filter((f) => f.k === "p" || f.k === "i"); VW.i = Math.max(0, VW.list.findIndex((f) => f === o.fs[i]));
   const v = $("viewer"); v.classList.remove("hide"); document.body.style.overflow = "hidden";
   v.innerHTML = '<div class="vbar"><span id="v-c"></span><button class="ib" data-act="closeViewer" aria-label="Закрыть">' + IC("x") + '</button></div><div class="vimg" id="v-img"></div><div class="vnav"><button class="ib" data-act="vprev" aria-label="Назад">' + IC("left") + '</button><button class="ib" data-act="vnext" aria-label="Вперёд">' + IC("chev") + "</button></div>";
@@ -570,6 +674,7 @@ const target = (t) => (t === "dr" ? OR.dr : DF);
 function act(name, d) {
   switch (name) {
     case "tab": showTab(d.k); break;
+    case "goqueue": showTab("printer"); { const l = $("q-lab"); if (l && l.scrollIntoView) l.scrollIntoView({ behavior: "smooth", block: "start" }); } break;
     case "open": openOrder(d.o); break;
     case "closeOrder": closeOrder(); break;
     case "sel": OR.sel = +d.i; $("strip").querySelectorAll(".th").forEach((e, i) => e.classList.toggle("sel", i === OR.sel)); paintPreview(); break;
@@ -585,6 +690,7 @@ function act(name, d) {
     case "vprev": VW.i--; showViewer(); break;
     case "vnext": VW.i++; showViewer(); break;
     case "clog": openLog(d.p, d.o); break;
+    case "reloadDoc": docNext = 0; docFail = ""; renderHistory(); loadDoc(true); break;
     case "closeLog": $("log").classList.add("hide"); $("log").innerHTML = ""; document.body.style.overflow = $("order").classList.contains("hide") ? "" : "hidden"; break;
     case "savedef": send({ a: "defaults", q: DF.q, s: DF.s, b: DF.b, p: DF.p, m: DF.m }); break;
     case "coAdd": { const v = +(($("co-id") && $("co-id").value) || "").trim(); if (v > 0) send({ a: "coadmin", op: "add", id: v }); else toast("Введи Telegram ID: число из цифр"); break; }
@@ -596,7 +702,8 @@ document.addEventListener("click", (e) => { const t = e.target.closest && e.targ
 document.addEventListener("input", (e) => { const t = e.target; if (t && t.dataset && t.dataset.act === "bright") act("bright", { t: t.dataset.t, value: t.value }); });
 
 /* ---------- запуск ---------- */
-window.__app = { calcProg, pageFids, hydrateAll, act, historyHTML, controlsHTML, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
+window.__app = { calcProg, pageFids, hydrateAll, parseDoc, fetchDoc, loadDoc, get docFail() { return docFail; }, fallbackPeople, act, historyHTML, controlsHTML, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
+if (!ADMIN && $("qa-set")) $("qa-set").classList.add("hide");
 showTab("printer"); renderConn(); renderQueue();
 if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
 setInterval(() => { if (S) tick(); }, 500);
