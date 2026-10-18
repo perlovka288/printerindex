@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>Панель принтера</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0a0a0a;--s1:#111;--s2:#191919;--s3:#242424;--line:#3b3b3b;--line2:#8a8a8a;
+  --tx:#f2f2f2;--mut:#9d9d9d;--dim:#5e5e5e;
+  --ok:#8dffb0;--bad:#ff7070;--warn:#ffd36b;
+  --rail:22px;
+  --notch:polygon(0 2px,2px 2px,2px 0,calc(100% - 2px) 0,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0 calc(100% - 2px));
+  --font:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;
+  --pfont:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;--card:rgba(14,14,14,.93);--bar:rgba(10,10,10,.96);--pure:#000;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;touch-action:pan-y;overscroll-behavior-x:none;margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 var(--font);-webkit-font-smoothing:none;font-smooth:never;overflow-x:hidden}
+body{min-height:100vh;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+button:focus-visible,input:focus-visible{outline:2px dashed #fff;outline-offset:2px}
+.hide{display:none!important}
+.ic{display:inline-block;fill:currentColor;flex:none;shape-rendering:crispEdges;vertical-align:middle}
+.px{border:2px solid var(--bc,var(--line));clip-path:var(--notch)}
+
+body.light{--bg:#fff;--s1:#f5f5f5;--s2:#ececec;--s3:#e0e0e0;--line:#c9c9c9;--line2:#555;--tx:#000;--mut:#555;--dim:#999;--ok:#0a8a3a;--bad:#c62828;--warn:#9a6b00;--card:rgba(255,255,255,.94);--bar:rgba(255,255,255,.97);--pure:#fff}
+body.light #px{filter:grayscale(1) contrast(1000) invert(1)}
+body.light .printer>svg{filter:invert(1)}
+body.light .paper{box-shadow:4px 4px 0 #bbb,0 0 0 2px #000}
+/* пиксельный фон: фото, которое печатается, вырисовывается точками по бокам */
+.right{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#px,#pxc{contain:strict;transform:translateZ(0)}
+#px{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.4;transition:opacity .6s steps(6);pointer-events:none}
+body.printing #px{opacity:1}
+#pxc{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.55;transition:opacity .6s steps(6)}
+body.printing #pxc{opacity:1}body.light #pxc{filter:grayscale(1) contrast(1000) invert(1)}
+.pxc-wrap{display:block;position:relative;height:clamp(230px,min(62vw,50vh),300px);margin:12px 0 4px;border:2px solid var(--line2);background:var(--pure);overflow:hidden}
+.top,main,.tabs{position:relative;z-index:2}
+
+/* каркас */
+.top{position:sticky;top:0;z-index:5;margin:0 var(--rail);display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:var(--bar);border-bottom:2px solid var(--line)}
+.ttl{font:400 12px/1.2 var(--pfont);letter-spacing:.02em;text-transform:uppercase}
+.conn{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--mut)}
+.conn i{width:8px;height:8px;background:var(--dim)}
+.conn.on i{background:var(--ok);animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
+.tabs{position:fixed;left:var(--rail);right:var(--rail);bottom:0;z-index:6;display:flex;gap:4px;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:var(--bar);border-top:2px solid var(--line)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;font-size:12px;color:var(--mut)}
+.tabs button.on{color:var(--bg);background:var(--tx)}
+.tabs button .ic{width:24px;height:24px}
+
+.card{--bc:var(--line);background:var(--card);padding:16px;margin:0 0 14px;border:2px solid var(--bc);clip-path:var(--notch)}
+.lab{font:400 10px/1.4 var(--pfont);letter-spacing:.02em;text-transform:uppercase;color:var(--mut)}
+.sec{margin:20px 2px 10px}
+.mut{color:var(--mut);font-size:14px}
+.btn{--bc:var(--tx);display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;background:var(--tx);color:var(--bg);font-weight:600;border:2px solid var(--bc);clip-path:var(--notch);box-shadow:inset -3px -3px 0 rgba(0,0,0,.28);transition:transform .08s steps(2)}
+.btn:active{transform:translate(2px,2px);box-shadow:none}
+.btn.sec2{--bc:var(--line2);background:var(--s3);color:var(--tx)}
+.btn.danger{--bc:var(--bad);background:var(--s2);color:var(--bad)}
+.btn[disabled]{opacity:.4}
+.link{display:inline-flex;align-items:center;gap:7px;padding:8px 0;color:var(--mut);font-size:14px;text-decoration:underline;text-decoration-style:dotted}
+.chip{display:inline-block;padding:2px 8px;border:2px solid var(--line);font-size:13px;color:var(--mut);white-space:nowrap}
+.chip.ok{border-color:var(--ok);color:var(--ok)}.chip.stop{border-color:var(--warn);color:var(--warn)}.chip.err{border-color:var(--bad);color:var(--bad)}
+
+/* принтер */
+.pc{padding:16px 14px 16px}
+.pc-head{display:flex;align-items:center;gap:8px}
+.led{width:8px;height:8px;background:var(--dim)}
+.pc[data-led=busy] .led{background:var(--tx);animation:blink .6s steps(2) infinite}
+.pc[data-led=ok] .led{background:var(--ok)}.pc[data-led=err] .led{background:var(--bad)}
+.pc-title{font:400 13px/1.4 var(--pfont);margin:10px 0 0}
+.printer{display:none;position:relative;width:236px;height:268px;margin:12px auto 0}
+.printer svg{display:block;position:absolute;shape-rendering:crispEdges}
+.p-tray{left:53px;top:0;width:130px;height:35px;z-index:1}
+.p-body{left:0;top:14px;width:236px;height:100px;z-index:3}
+.p-outtray{left:23px;top:112px;width:190px;height:40px;z-index:1}
+@keyframes vib{50%{transform:translateY(2px)}}
+.led-dot{fill:#555}.led-glow{fill:transparent}
+.pc[data-on="1"] .led-dot{fill:#6fd39a}
+.pc[data-led=busy] .led-dot{fill:#fff;animation:blink .5s steps(2) infinite}.pc[data-led=busy] .led-glow{fill:rgba(255,255,255,.35)}
+.pc[data-led=ok] .led-dot{fill:var(--ok)}.pc[data-led=ok] .led-glow{fill:rgba(141,255,176,.4)}
+.pc[data-led=err] .led-dot{fill:var(--bad);animation:blink .4s steps(2) infinite}.pc[data-led=err] .led-glow{fill:rgba(255,112,112,.4)}
+.p-out{position:absolute;left:50%;top:108px;width:150px;height:158px;margin-left:-75px;overflow:hidden;z-index:2}
+.sheet{position:absolute;left:50%;top:0;width:106px;height:150px;margin-left:-53px;background:#ecece8;border:2px solid #fff;overflow:hidden;
+  --r:0;transform:translateY(calc((var(--r) - 1) * 100%));transition:transform 1s linear,opacity .25s steps(3);opacity:0}
+.sheet.show{opacity:1}.sheet.reset{transition:none}
+.sheet.fall{transition:transform .28s steps(5),opacity .28s steps(3);transform:translateY(26px);opacity:0}
+.sheet .sin{position:absolute;inset:0}
+.sheet .ph-ic{position:absolute;inset:0;display:none;place-items:center;color:#777}.sheet.empty .ph-ic{display:grid}
+.sheet .ph-ic .ic{width:30px;height:24px}
+.pg .cell{position:absolute;overflow:hidden}
+.pg .cell.blank{outline:1px dashed rgba(0,0,0,.18);outline-offset:-1px}
+.pg .ci{position:absolute;inset:0;background:#bdbdb9 center no-repeat;opacity:0;transition:opacity .3s steps(4)}
+.pg .ci.ld{opacity:1}.pg .ci.fit{background-size:contain;background-color:transparent}.pg .ci.fill{background-size:cover}
+.pg .mgn{position:absolute;background:repeating-linear-gradient(45deg,#fff 0 3px,#d2d2d2 3px 4px)}
+.okb{position:absolute;left:50%;top:150px;width:60px;height:60px;margin-left:-30px;background:var(--ok);color:#06150d;display:grid;place-items:center;z-index:5;transform:scale(0);transition:transform .35s steps(5);clip-path:var(--notch)}
+.okb .ic{width:32px;height:30px}
+.pc[data-led=ok] .okb{transform:scale(1)}
+.cnt{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums;font-family:var(--pfont)}
+.cnt b{font-size:24px;font-weight:400}.cnt span{font-size:14px;color:var(--mut)}.cnt .pct{margin-left:8px;font-size:11px}
+.bar{height:16px;border:2px solid var(--line2);margin:12px 2px 10px;padding:2px;background:var(--pure)}
+.bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--tx) 0 8px,transparent 8px 10px);transition:width .9s steps(12)}
+.pc[data-led=ok] .bar i{background:repeating-linear-gradient(90deg,var(--ok) 0 8px,transparent 8px 10px)}
+.pc-sub{text-align:center;color:var(--mut);font-size:14px;min-height:19px}
+.bgrp{display:flex;width:100%;border:2px solid var(--line2);background:var(--s2)}
+.bgrp>button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 4px;font-size:14px;color:var(--tx)}
+.bgrp>button+button{border-left:2px solid var(--line2)}
+.bgrp>button .ic{width:20px;height:20px}
+@media (hover:hover){.bgrp>button:not([disabled]):hover{background:var(--s3)}}
+.bgrp>button:not([disabled]):active{background:var(--tx);color:var(--bg)}
+.bgrp>button[disabled]{opacity:.35;cursor:default}
+.bgrp>button.danger:not([disabled]){color:var(--bad)}
+.bgrp .bdg{min-width:18px;height:18px;padding:0 4px;background:var(--tx);color:var(--bg);font-size:12px;font-weight:700;display:inline-grid;place-items:center}
+#qa{margin-top:14px}
+
+/* списки */
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin-bottom:10px;background:var(--card);border:2px solid var(--line);clip-path:var(--notch)}
+.row:active{background:var(--s3)}
+.row .rt{flex:1;min-width:0}.row .rt b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row .rt span{color:var(--mut);font-size:14px}
+.row>.ic{color:var(--dim)}
+.th{position:relative;width:52px;height:52px;background:var(--s3) center/cover no-repeat;flex:none;overflow:hidden;border:2px solid var(--line);image-rendering:auto}
+.th.more{display:grid;place-items:center;color:var(--mut);font-size:14px;font-weight:600}.th.er{opacity:.5}.th .ic{position:absolute;inset:0;margin:auto;color:var(--dim)}
+.empty{display:grid;place-items:center;gap:8px;padding:34px 10px;color:var(--mut);text-align:center}
+.empty .ic{width:36px;height:36px;color:var(--dim)}
+.av{width:42px;height:42px;background:var(--s3);display:grid;place-items:center;font:400 14px var(--pfont);flex:none;border:2px solid var(--line2)}
+.person{margin-bottom:10px;background:var(--card);border:2px solid var(--line);clip-path:var(--notch)}
+.person>.row{margin:0;border:0;clip-path:none;background:none}
+.person .chev{transition:transform .2s steps(3)}.person.open .chev{transform:rotate(180deg)}
+.pbody{display:none;padding:2px 12px 12px;border-top:2px solid var(--line)}.person.open .pbody{display:block}
+.ob{padding:12px 0 4px;border-bottom:2px dotted var(--line)}.ob:last-child{border-bottom:0}
+.oh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}.od{font-weight:600;font-size:15px}
+.meta{color:var(--mut);font-size:13.5px;margin-bottom:9px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.grid .th{width:auto;height:auto;aspect-ratio:1}
+
+/* настройки и окно печати (повторяет окно Windows «Выберите способ печати изображений») */
+.grp{padding:14px 0;border-bottom:2px dotted var(--line)}.grp:last-child{border-bottom:0}
+.grp h3{margin:0 0 9px;font-size:14px;font-weight:600;color:var(--mut)}
+.dlgt{font:400 11px/1.5 var(--pfont);margin:2px 0 12px;color:var(--tx)}
+.ddg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
+.dd{display:block;width:100%}
+.dd small{display:block;font-size:12.5px;color:var(--mut);margin-bottom:3px}
+.dd .v{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px;padding:0 8px 0 10px;background:var(--s2);border:2px solid var(--line2);font-size:14.5px}
+.dd .v span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd .v .ic{width:14px;height:8px;color:var(--mut)}
+.dd[disabled] .v{opacity:.6}
+@media (hover:hover){.dd:not([disabled]):hover .v{background:var(--s3)}}
+.dd:not([disabled]):active .v{background:var(--tx);color:var(--bg)}
+.dmain{display:grid;grid-template-columns:minmax(0,1fr) 98px;gap:10px;margin-top:12px}
+.pv{position:relative;display:grid;place-items:center;min-height:300px;background:var(--pure);border:2px solid var(--line);padding:8px}
+.paper{position:relative;background:#f4f4f1;overflow:hidden;transition:width .2s steps(3),height .2s steps(3);box-shadow:4px 4px 0 #000,0 0 0 2px #fff}
+.paper .nofile{position:absolute;inset:0;display:grid;place-items:center;color:#7a7a76;text-align:center;font-size:13px;padding:10px;z-index:3}
+.rail{height:300px;overflow-y:auto;background:var(--s1);border:2px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin}
+.rail.h{height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+.rail.h .lt{width:98px;flex:none}
+.lt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 3px 5px;border:2px solid transparent;font-size:12.5px;text-align:center;color:var(--mut);line-height:1.15}
+.lt svg{width:68px;height:52px;shape-rendering:crispEdges}
+.lt.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+@media (hover:hover){.lt:not(.on):hover{border-color:var(--line2);color:var(--tx)}}
+.pnav{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0 4px}
+.pnav .ib2{width:38px;height:34px;display:grid;place-items:center;background:var(--s2);border:2px solid var(--line2)}
+.pnav .ib2:active{background:var(--tx);color:var(--bg)}.pnav .ib2[disabled]{opacity:.3}
+.pnav .ib2 .ic{width:14px;height:20px}
+.pnav .pn{min-width:110px;text-align:center;color:var(--mut);font-size:14.5px}
+.bar2{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:12px;padding:12px;background:var(--card);border:2px solid var(--line)}
+.bar2 .cp{display:flex;align-items:center;gap:8px;font-size:14.5px}
+.ck{display:flex;align-items:center;gap:9px;font-size:14.5px;text-align:left}
+.ck i{width:20px;height:20px;border:2px solid var(--line2);background:var(--pure);display:grid;place-items:center;flex:none}
+.ck i .ic{width:14px;height:12px;color:var(--bg);display:none}
+.ck.on i{background:var(--tx)}.ck.on i .ic{display:block}
+.rng{display:flex;align-items:center;gap:12px}.rng input{flex:1;accent-color:#fff}.rng output{min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
+.stp{display:inline-flex;align-items:center;background:var(--s2);border:2px solid var(--line2)}
+.stp button{width:40px;height:36px;display:grid;place-items:center}.stp button[disabled]{opacity:.3}
+.stp button .ic{width:16px;height:16px}
+.stp output{min-width:38px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.stp button:not([disabled]):active{background:var(--tx);color:var(--bg)}
+.line{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.inp{width:100%;min-height:46px;padding:0 14px;background:var(--s2);border:2px solid var(--line2);color:var(--tx);font:inherit;border-radius:0}
+
+/* окна */
+.ov{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.ov-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 10px 10px;background:var(--bg);border-bottom:2px solid var(--line)}
+.ov-top .ib{width:42px;height:42px;display:grid;place-items:center;background:var(--s2);border:2px solid var(--line2)}
+.ov-top .ib .ic{width:14px;height:20px}
+.ov-top .tt{flex:1;min-width:0}.ov-top .tt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ov-top .tt span{color:var(--mut);font-size:13.5px}
+.ov-body{padding:12px 14px calc(120px + env(safe-area-inset-bottom,0px))}
+.strip{display:flex;gap:7px;overflow-x:auto;padding:12px 2px 6px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
+.strip .th{width:50px;height:50px;opacity:.5}.strip .th.sel{opacity:1;border-color:var(--tx)}
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:2px solid var(--line)}
+.actions .btn{flex:1}.actions .btn.danger{flex:0 0 auto;width:auto;padding:0 18px}
+.bub{max-width:88%;margin:0 0 8px;padding:9px 12px;background:var(--s2);border:2px solid var(--line)}
+.bub small{display:block;color:var(--dim);font-size:12px;margin-top:3px}
+#viewer{background:#000;display:flex;flex-direction:column}
+#viewer .vimg{flex:1;background:center/contain no-repeat;margin:0}
+#viewer .vbar{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;color:#fff}
+#viewer .vnav{display:flex;justify-content:space-between;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+#viewer .ib{width:46px;height:46px;display:grid;place-items:center;background:rgba(255,255,255,.12);border:2px solid #fff}
+#viewer .ib .ic{width:14px;height:20px}
+.toast{position:fixed;left:14px;right:14px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:60;padding:12px 14px;background:var(--s3);border:2px solid var(--line2)}
+/* выбор из списка (как выпадающий список Windows) */
+.pk{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end}
+.pk-bg{position:absolute;inset:0;background:rgba(0,0,0,.7)}
+.pk-box{position:relative;width:100%;max-height:78vh;overflow-y:auto;background:var(--bg);border-top:2px solid var(--tx);padding:14px 14px calc(18px + env(safe-area-inset-bottom,0px))}
+.pk-t{font:400 11px/1.4 var(--pfont);margin:0 0 12px}
+.po{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px 12px;margin-bottom:6px;background:var(--s2);border:2px solid var(--line);font-size:15px}
+.po small{display:block;color:var(--mut);font-size:12.5px}
+.po.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}.po.on small{color:#444}
+.po .ic{width:16px;height:14px}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.enter{animation:rise .24s steps(4) both}
+/* телефон: вместо картинки принтера в карточке пиксель-арт того, что печатается; настройки в одну колонку */
+@media (max-width:699px){
+  :root{--rail:0px}
+  .right{display:none}
+  
+  .top{margin:0;padding:10px 52px 10px 14px}
+  .top .th2{top:calc(7px + env(safe-area-inset-top,0px))}
+  main{padding:14px 12px calc(84px + env(safe-area-inset-bottom,0px))}
+  .card{padding:14px 12px}
+  .tabs{left:0;right:0;gap:16px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));overflow-x:auto}
+  .tabs button{font-size:15px;white-space:nowrap}
+  .ov-top{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  .dmain{grid-template-columns:minmax(0,1fr)}
+  .dmain .rail{height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .dmain .rail .lt{width:92px;flex:none}
+  .pv{min-height:240px}
+  .lt svg{width:64px;height:48px}
+  .dd .v{min-height:44px}.stp button{width:44px;height:42px}.ck i{width:24px;height:24px}.pnav .ib2{width:44px;height:40px}
+  .bar2{flex-direction:column;align-items:stretch;gap:12px}
+  .actions .btn{min-height:52px}
+}
+@media (min-width:700px){
+  :root{--rail:0px}
+  .right{left:50%}
+  .top{margin:0 50vw 0 0}main{margin-right:50vw;padding-left:22px;padding-right:22px}.tabs{left:0;right:50vw}
+  .ov,.pk{right:50%}.actions{right:50%}
+}
+.top .th2{position:absolute;right:10px;top:calc(8px + env(safe-area-inset-top,0px));padding:6px;border-radius:50%}
+.top .th2 svg{display:block}@media (hover:hover){.top .th2:hover{background:var(--s3)}}
+.top{padding-right:52px}
+/* нижние «ссылки» вместо иконок, как внизу левой панели в промте */
+.tabs{justify-content:flex-start;gap:20px;border-top:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.tabs button{flex:none;flex-direction:row;font-size:16px;padding:4px 0}
+.tabs button .ic{display:none}.tabs button.on{background:none;color:var(--tx);text-decoration:underline;text-underline-offset:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="right"><canvas id="px" aria-hidden="true"></canvas></div>
+
+<header class="top"><div class="ttl" id="ttl">Принтер</div><div class="conn" id="conn"><i></i><span>нет связи</span></div><button class="th2" id="theme" aria-label="Сменить тему"></button></header>
+
+<main>
+  <section id="v-printer">
+    <div class="card pc" id="pc" data-led="idle">
+      <div class="pc-head"><i class="led"></i><span class="lab" id="pc-lab">Свободен</span></div>
+      <div class="pc-title" id="pc-title">Принтер свободен</div>
+      <div class="pxc-wrap"><canvas id="pxc" aria-hidden="true"></canvas></div>
+      <div class="printer" id="printer"></div>
+      <div class="cnt" id="cnt"><b id="cnt-k">0</b><span>/</span><span id="cnt-p">0</span><span class="pct" id="cnt-pct"></span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="pc-sub" id="pc-sub"></div>
+      <div class="bgrp" id="qa" role="group" aria-label="Быстрые действия"></div>
+    </div>
+    <div class="sec lab" id="q-lab">Очередь</div>
+    <div id="queue"></div>
+  </section>
+  <section id="v-history" class="hide"></section>
+  <section id="v-settings" class="hide"></section>
+  <section id="v-access" class="hide"></section>
+</main>
+
+<nav class="tabs" id="tabs"></nav>
+<div class="ov hide" id="order"></div>
+<div class="ov hide" id="log"></div>
+<div class="ov hide" id="viewer"></div>
+<div class="pk hide" id="pk"><div class="pk-bg" data-act="pkclose"></div><div class="pk-box" id="pk-box"></div></div>
+
+<script>
+
+"use strict";
+const tg = window.Telegram && window.Telegram.WebApp;
+try { if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor("#0a0a0a"); tg.setBackgroundColor && tg.setBackgroundColor("#0a0a0a"); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } } catch (e) {}
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const qs = new URLSearchParams(location.search);
+
+/* ---------- токен (нужен только чтобы читать состояние и показывать фото) ---------- */
+const TOKEN_RE = /^\d{6,}:[\w-]{30,}$/;
+function readToken() {
+  let t = qs.get("tk") || "";
+  if (!t) { const m = /(?:^#|&)tk=([^&]+)/.exec(location.hash || ""); if (m) { try { t = decodeURIComponent(m[1]); } catch (e) {} } }
+  if (!TOKEN_RE.test(t)) { try { t = localStorage.getItem("tk") || ""; } catch (e) { t = ""; } }
+  return TOKEN_RE.test(t) ? t : "";
+}
+const TK = readToken();
+try { if (TK) localStorage.setItem("tk", TK); if (qs.get("tk")) { qs.delete("tk"); history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "")); } } catch (e) {}
+const VIEWER = qs.get("a") || "";
+const ADMIN = qs.get("r") !== "co";
+const API = "https://api.telegram.org/bot" + TK;
+
+
+/* ---------- словари (ключи как в bot.py и layouts.py) ---------- */
+const QL = { auto: "Авто", medium: "Стандарт", low: "Черновик", high: "Высокое" };   // порядок как в Windows: Авто, Стандарт, Другое
+const QL_MORE = ["low", "high"];
+/* название, ширина и высота в мм (книжная), подпись в дюймах */
+const PAPERS = { a4: ["A4", 210, 297, ""], letter: ["Letter 22×28 см", 216, 279, "8.5″×11″"], "10x15": ["10×15 см", 100, 150, "4″×6″"],
+  "13x18": ["13×18 см", 130, 180, "5″×7″"], "20x25": ["20×25 см", 200, 250, "8″×10″"], a5: ["A5", 148, 210, ""], b5: ["B5", 176, 250, ""], "9x13": ["9×13 см", 90, 130, "3.5″×5″"] };
+const PAPER_MAIN = ["a4", "letter", "10x15", "13x18", "20x25"];
+const MEDIA = { plain: "Обычная бумага", ppplus: "Photo Paper Plus Glossy II", luster: "Photo Paper Pro Luster", semi: "Photo Paper Plus Semi-gloss",
+  glossy: "Glossy Photo Paper", matte: "Matte Photo Paper", envelope: "Конверт", hag_ij_a: "Ink Jet Hagaki (A)", hag_ij: "Ink Jet Hagaki", hag_k_a: "Hagaki K (A)",
+  hag_k: "Hagaki K", hag_a: "Hagaki (A)", hag: "Hagaki", hires: "High Resolution Paper", driver: "Как в драйвере" };
+const RES = { ok: ["Напечатано", "ok"], stop: ["Остановлено", "stop"], err: ["Ошибка", "err"] };
+const MON = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+
+/* ---------- пиксельные иконки: рисуем по ASCII-картинкам ---------- */
+const ART = {
+  printer: ["...######...", "...#....#...", "...#....#...", "############", "#..........#", "#........#.#", "############", "..#......#..", "..#.####.#..", "..#......#..", "..########..", "............"],
+  history: ["....####....", "..##....##..", ".#........#.", ".#...#....#.", "#....#.....#", "#....#.....#", "#....####..#", "#..........#", ".#........#.", ".#........#.", "..##....##..", "....####...."],
+  sliders: ["..#...#...#.", "..#...#...#.", ".###..#..###", ".###..#..###", "..#..###..#.", "..#..###..#.", "..#...#...#.", "..#...#...#.", "..#...#...#.", "..#...#...#.", "..#...#...#.", "..#...#...#."],
+  users: ["..####......", ".######..##.", ".######.####", ".######.####", "..####...##.", "...##....##.", "..####..####", ".######.####", "########.###", "............"],
+  stop: ["............", "............", "..########..", "..########..", "..########..", "..########..", "..########..", "..########..", "..########..", "..########..", "............", "............"],
+  check: ["..........##", ".........###", "........###.", "##.....###..", "###...###...", ".###.###....", "..#####.....", "...###......", "....#......."],
+  x: ["##......##", "###....###", ".###..###.", "..######..", "...####...", "..######..", ".###..###.", "###....###", "##......##"],
+  chev: ["##...", ".##..", "..##.", "...##", "..##.", ".##..", "##..."],
+  down: ["##...##", ".##.##.", "..###..", "...#..."],
+  plus: ["...##...", "...##...", "...##...", "########", "########", "...##...", "...##...", "...##..."],
+  minus: ["########", "########"],
+  image: ["############", "#..........#", "#.##.......#", "#.##....#..#", "#......###.#", "#..#..######", "#.###.######", "############"],
+  file: ["#######..", "#.....##.", "#.....#.#", "#.....###", "#.......#", "#.......#", "#.......#", "#.......#", "#########"],
+  eye: ["............", "...######...", ".###....###.", "##..####..##", "##..####..##", ".###....###.", "...######...", "............"],
+  queue: ["###########", "###########", "...........", "###########", "###########", "...........", "#######....", "#######...."],
+  alert: [".....##.....", ".....##.....", "....####....", "....#..#....", "...##..##...", "...#....#...", "..##.##.##..", "..#..##..#..", ".##......##.", ".##########."],
+};
+ART.left = ART.chev.map((r) => r.split("").reverse().join(""));
+const ICS = {};
+function icoSvg(name, cls, px) {
+  const a = ART[name]; if (!a) return "";
+  const w = Math.max(...a.map((r) => r.length)), h = a.length; let d = "";
+  a.forEach((row, y) => { const re = /#+/g; let m; while ((m = re.exec(row))) d += "M" + m.index + " " + y + "h" + m[0].length + "v1h-" + m[0].length + "z"; });
+  const k = px || 2;
+  return '<svg class="ic' + (cls ? " " + cls : "") + '" viewBox="0 0 ' + w + " " + h + '" width="' + w * k + '" height="' + h * k + '" preserveAspectRatio="none"><path d="' + d + '"/></svg>';
+}
+const IC = (n, cls) => (ICS[n + "|" + (cls || "")] = ICS[n + "|" + (cls || "")] || icoSvg(n, cls));
+
+const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const plural = (n, f) => n + " " + (n % 10 === 1 && n % 100 !== 11 ? f[0] : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? f[1] : f[2]);
+const files = (n) => plural(n, ["файл", "файла", "файлов"]);
+const photos = (n) => plural(n, ["фото", "фото", "фото"]);
+function fmtTs(ts) { const d = new Date(ts * 1000), p = (x) => String(x).padStart(2, "0"); return d.getDate() + " " + MON[d.getMonth()] + ", " + p(d.getHours()) + ":" + p(d.getMinutes()); }
+function fmtDay(ts) { const d = new Date(ts * 1000); return d.getDate() + " " + MON[d.getMonth()]; }
+
+/* ---------- геометрия листа: ТОЧНАЯ копия расчёта из layouts.py и smartfit.py (мм) ----------
+   Превью в приложении и печать считают рамки одинаково, поэтому на экране видно то, что напечатается.
+   Если меняешь числа, меняй их и в layouts.py (проверка: python tools_check.py). */
+/*GEOM-BEGIN*/
+const GAP = 2, MIN_M = 4, CONTACT_M = 10;
+const LAYOUTS = {
+  full:    { name: "Во всю страницу",    n: 1,  cell: null,        cols: 1, rows: 1, orient: "A" },
+  "13x18": { name: "13 × 18 см (2)",     n: 2,  cell: [130, 180],  cols: 2, rows: 1, orient: "L" },
+  "20x25": { name: "20 × 25 см (1)",     n: 1,  cell: [200, 250],  cols: 1, rows: 1, orient: "A" },
+  "10x15": { name: "10 × 15 см (2)",     n: 2,  cell: [100, 150],  cols: 2, rows: 1, orient: "L" },
+  "9x13":  { name: "9 × 13 см (4)",      n: 4,  cell: [130, 90],   cols: 2, rows: 2, orient: "L" },
+  wallet:  { name: "Кошелёк (9)",        n: 9,  cell: [89, 63.5],  cols: 3, rows: 3, orient: "L" },
+  contact: { name: "Обзорный лист (35)", n: 35, cell: null,        cols: 5, rows: 7, orient: "P" },
+};
+/* сетки: pw x ph - бумага (книжная), firstLand - первое фото листа альбомное */
+function gridPlan(layout, pw, ph, firstLand) {
+  const sp = LAYOUTS[layout], land = sp.orient === "L" || (sp.orient === "A" && !!firstLand);
+  const W = land ? ph : pw, H = land ? pw : ph; let cw, ch;
+  if (layout === "contact") { cw = (W - 2 * CONTACT_M - GAP * (sp.cols - 1)) / sp.cols; ch = (H - 2 * CONTACT_M - GAP * (sp.rows - 1)) / sp.rows; }
+  else { cw = sp.cell[0]; ch = sp.cell[1]; if (sp.orient === "A" && land) { const t = cw; cw = ch; ch = t; } }
+  let gw = sp.cols * cw + (sp.cols - 1) * GAP, gh = sp.rows * ch + (sp.rows - 1) * GAP;
+  const k = Math.min(1, (W - 2 * MIN_M) / gw, (H - 2 * MIN_M) / gh);
+  cw *= k; ch *= k; const gap = GAP * k;
+  gw = sp.cols * cw + (sp.cols - 1) * gap; gh = sp.rows * ch + (sp.rows - 1) * gap;
+  const x0 = (W - gw) / 2, y0 = (H - gh) / 2, cells = [];
+  for (let r = 0; r < sp.rows; r++) for (let c = 0; c < sp.cols; c++) cells.push({ x: x0 + c * (cw + gap), y: y0 + r * (ch + gap), w: cw, h: ch });
+  return { land, W, H, cells, mg: null };
+}
+/* «Во всю страницу»: mg = аппаратные поля принтера [слева, справа, сверху, снизу] в мм.
+   smart: фото целиком в области печати. Иначе (по размеру кадра) фото заполняет ВЕСЬ лист, лишнее обрезается. */
+function fullPlan(iw, ih, pw, ph, mg, smart, mm) {
+  mm = mm || 0; const m = mg && mg.length === 4 ? mg : [3, 3, 3, 3], ml = m[0], mr = m[1], mt = m[2], mb = m[3];
+  const prW = pw - ml - mr, prH = ph - mt - mb; let left, top, right, bottom;
+  if (smart) {
+    left = Math.max(0, mm - ml); top = Math.max(0, mm - mt); right = Math.min(prW, pw - mm - ml); bottom = Math.min(prH, ph - mm - mt);
+    if (right - left < 1 || bottom - top < 1) { left = 0; top = 0; right = prW; bottom = prH; }
+  } else { left = -ml; top = -mt; right = pw - ml; bottom = ph - mt; }
+  const rw = right - left, rh = bottom - top;
+  const sp = smart ? Math.min(rw / iw, rh / ih) : Math.max(rw / iw, rh / ih);
+  const sr = smart ? Math.min(rw / ih, rh / iw) : Math.max(rw / ih, rh / iw);
+  const rotate = smart ? sr > sp * 1.001 : sr < sp * 0.999;
+  const x0 = left + ml, y0 = top + mt, x1 = right + ml, y1 = bottom + mt;   // область на листе (книжном), от его угла
+  let cell, W, H, ov = null;
+  if (rotate) {   // альбомная страница: лист поворачивается на 90° против часовой, поля поворачиваются вместе с ним
+    W = ph; H = pw; cell = { x: ph - y1, y: x0, w: y1 - y0, h: x1 - x0 };
+    ov = { t: ml, b: mr, r: mt, l: mb };
+  } else { W = pw; H = ph; cell = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; ov = { t: mt, b: mb, l: ml, r: mr }; }
+  return { land: rotate, W, H, cells: [cell], mg: smart ? null : ov };
+}
+/*GEOM-END*/
+function planFor(layout, paperKey, dims, smart) {
+  const pp = PAPERS[paperKey] || PAPERS.a4, iw = dims ? dims[0] : 3, ih = dims ? dims[1] : 4;
+  if (!LAYOUTS[layout] || layout === "full") return fullPlan(iw, ih, pp[1], pp[2], S && S.mg, smart, 0);
+  return gridPlan(layout, pp[1], pp[2], iw > ih);
+}
+/* листы заказа: копии каждого фото подряд (A, A, B, B), потом раскладка режет их на листы. Документы идут отдельными листами. */
+function planSheets(fs, copies, layout) {
+  const out = []; let buf = []; const n = (LAYOUTS[layout] || LAYOUTS.full).n;
+  const flush = () => { for (let i = 0; i < buf.length; i += n) out.push({ idx: buf.slice(i, i + n) }); buf = []; };
+  fs.forEach((f, i) => { if (f.k === "p" || f.k === "i") { for (let c = 0; c < copies; c++) buf.push(i); } else { flush(); for (let c = 0; c < copies; c++) out.push({ idx: [i], doc: true }); } });
+  flush(); return out;
+}
+/* рисует лист: рамки с фото. items - для каждого кадра массив file_id (пробуем по очереди). o.physical: показать лист так, как он выйдет из принтера (повёрнутым) */
+function paintSheet(host, L, items, o) {
+  host.innerHTML = "";
+  const page = document.createElement("div"); page.className = "pg";
+  if (o.physical && L.land) page.style.cssText = "position:absolute;left:50%;top:50%;width:" + o.hostH + "px;height:" + o.hostW + "px;transform:translate(-50%,-50%) rotate(-90deg)";
+  else page.style.cssText = "position:absolute;inset:0";
+  const bf = o.bright ? "brightness(" + (1 + o.bright / 160).toFixed(2) + ") contrast(" + (1 - o.bright / 700).toFixed(2) + ")" : "";
+  L.cells.forEach((c, i) => {
+    const it = items[i], d = document.createElement("div"); d.className = "cell" + (it ? "" : (o.guides ? " blank" : ""));
+    d.style.cssText = "left:" + (c.x / L.W * 100) + "%;top:" + (c.y / L.H * 100) + "%;width:" + (c.w / L.W * 100) + "%;height:" + (c.h / L.H * 100) + "%";
+    if (it) { const im = document.createElement("div"); im.className = "ci " + (o.smart ? "fit" : "fill"); im.dataset.f = it[0] || ""; if (it[1]) im.dataset.f2 = it[1]; if (bf) im.style.filter = bf; d.appendChild(im); }
+    page.appendChild(d);
+  });
+  if (L.mg && o.margins !== false) {   // белая кайма: драйвер не печатает в аппаратных полях принтера
+    const mk = (css) => { const e = document.createElement("div"); e.className = "mgn"; e.style.cssText = css; page.appendChild(e); };
+    const m = L.mg;
+    if (m.t > 0.4) mk("left:0;top:0;width:100%;height:" + m.t / L.H * 100 + "%");
+    if (m.b > 0.4) mk("left:0;bottom:0;width:100%;height:" + m.b / L.H * 100 + "%");
+    if (m.l > 0.4) mk("left:0;top:0;height:100%;width:" + m.l / L.W * 100 + "%");
+    if (m.r > 0.4) mk("right:0;top:0;height:100%;width:" + m.r / L.W * 100 + "%");
+  }
+  host.appendChild(page); hydrateAll(host);
+}
+/* значок раскладки для списка справа (как в Windows): страница и рамки */
+function layoutIcon(key) {
+  const L = key === "full" ? fullPlan(4, 3, 210, 297, [0, 0, 0, 0], true, 4) : gridPlan(key, 210, 297, true);
+  const bw = 34, bh = 26, k = Math.min(bw / L.W, bh / L.H), pw = Math.round(L.W * k), ph = Math.round(L.H * k), ox = Math.round((36 - pw) / 2), oy = Math.round((28 - ph) / 2);
+  let s = '<svg viewBox="0 0 36 28" aria-hidden="true"><rect x="' + ox + '" y="' + oy + '" width="' + pw + '" height="' + ph + '" fill="#e9e9e5"/>';
+  L.cells.forEach((c) => {
+    const x = ox + Math.round(c.x * k), y = oy + Math.round(c.y * k), w = Math.max(2, Math.round(c.w * k)), h = Math.max(2, Math.round(c.h * k));
+    s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="#6d6d6d"/><rect x="' + x + '" y="' + (y + Math.round(h * .55)) + '" width="' + w + '" height="' + Math.max(1, h - Math.round(h * .55)) + '" fill="#2f2f2f"/>';
+  });
+  return s + "</svg>";
+}
+
+/* ---------- прогресс: чистая функция, один в один с логикой бота ---------- */
+/* n - состояние печати из бота; recvAt - когда оно получено; el у бота = секунд с начала печати на момент публикации */
+const mono = { o: "", v: 0 };
+function calcProg(n, recvAt, nowMs) {
+  const P = n.P || 0, d = Math.min(P, n.d || 0);
+  const out = { st: n.st, P, d, pages: d, pr: 0, k: d, cur: P ? Math.min(P - 1, d) : 0, fr: 0 };
+  /* d - РЕАЛЬНО напечатанные страницы: их задания ушли из очереди принтера (так считает бот).
+     Внутри текущей страницы шкала ползёт по времени, но до следующей страницы сама не дотягивает. */
+  if (n.st === "done") { out.pages = P; out.k = P; out.cur = Math.max(0, P - 1); out.fr = 1; }
+  else if (n.st === "print" && P > 0) {
+    if (d >= P) { out.pages = P - 0.01; out.cur = P - 1; out.fr = 1; }   // все страницы вышли, принтер заканчивает
+    else {
+      const el = (n.el || 0) + Math.max(0, nowMs - recvAt) / 1000;
+      out.fr = Math.min(0.97, el / Math.max(0.01, n.spp || 40)); out.pages = d + out.fr;
+    }
+  } else if (n.st === "stop" || n.st === "err") { out.pages = d; }
+  if (n.st === "print") {   // шкала только растёт
+    if (mono.o !== n.o) { mono.o = n.o; mono.v = 0; }
+    if (out.pages < mono.v) { out.pages = Math.min(mono.v, d + 0.97); out.fr = out.pages - d; }
+    mono.v = out.pages;
+  }
+  out.pr = P ? Math.min(1, out.pages / P) : 0;
+  return out;
+}
+
+/* ---------- данные: состояние (закреплённое сообщение) и файл истории ---------- */
+let S = null, DOC = null, docVer = -1, recvAt = 0, online = false, loadingDoc = false;
+async function api(method, params) { const r = await fetch(API + "/" + method + "?" + new URLSearchParams(params || {})); return r.json(); }
+const pathCache = new Map(), urlCache = new Map(), dimCache = new Map(), dead = new Set();
+async function fileUrl(fid) {
+  if (!fid || !TK) return "";
+  if (pathCache.has(fid)) return pathCache.get(fid);
+  if (dead.has(fid)) return "";
+  for (let a = 0; a < 5; a++) {
+    try {
+      const r = await api("getFile", { file_id: fid });
+      if (r.ok) { const u = "https://api.telegram.org/file/bot" + TK + "/" + r.result.file_path; pathCache.set(fid, u); return u; }
+      if (r.error_code === 429) { const ra = r.parameters && typeof r.parameters.retry_after === "number" ? r.parameters.retry_after : 2; await sleep(ra * 1000 + 200); continue; }   // лимит запросов: ждём сколько просит Telegram, а не сдаёмся
+      if (r.error_code === 400 || r.error_code === 401) { dead.add(fid); break; }   // файл слишком большой / не найден: повторять бесполезно
+    } catch (e) {}
+    await sleep(500 * (a + 1));
+  }
+  return "";
+}
+/* картинка: с повторами, проверкой загрузки и кэшем - чтобы фото не «то грузится, то нет» */
+function loadImg(fid) {
+  if (!fid) return Promise.resolve("");
+  if (urlCache.has(fid)) return urlCache.get(fid);
+  const p = (async () => {
+    for (let a = 0; a < 3; a++) {
+      const u = await fileUrl(fid);
+      if (u) {
+        const ok = await new Promise((res) => { const i = new Image(); i.onload = () => { dimCache.set(u, [i.naturalWidth || 0, i.naturalHeight || 0]); res(true); }; i.onerror = () => res(false); i.src = u; });
+        if (ok) return u;
+        pathCache.delete(fid);
+      }
+      if (dead.has(fid)) break;
+      await sleep(500 * (a + 1));
+    }
+    return "";
+  })();
+  urlCache.set(fid, p);
+  p.then((u) => { if (!u) urlCache.delete(fid); });
+  return p;
+}
+/* пробует по очереди: сначала маленькое превью, потом исходный файл (или наоборот) */
+async function loadFirst(fids) { for (const f of fids) { if (!f) continue; const u = await loadImg(f); if (u) return u; } return ""; }
+let running = 0; const waitq = [];
+function queued(fn) { return new Promise((res) => { const go = async () => { running++; try { res(await fn()); } finally { running--; if (waitq.length) waitq.shift()(); } }; running < 3 ? go() : waitq.push(go); }); }
+async function hydrate(el) {
+  const u = await queued(() => loadFirst([el.dataset.f, el.dataset.f2]));
+  if (u) { el.style.backgroundImage = 'url("' + u + '")'; el.classList.remove("er"); el.classList.add("ld"); return; }
+  el.classList.add("er");
+  const t = +el.dataset.t || 0;   // не вышло: пробуем ещё несколько раз с паузами
+  if (t < 6) { el.dataset.t = String(t + 1); setTimeout(() => { el.classList.remove("er"); hydrate(el); }, 2500 * (t + 1)); }
+}
+const io = typeof IntersectionObserver !== "undefined" ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); hydrate(e.target); } }), { rootMargin: "250px" }) : null;
+function hydrateAll(root) { if (!root || !root.querySelectorAll) return; root.querySelectorAll("[data-f]:not([data-h])").forEach((el) => { el.dataset.h = "1"; io ? io.observe(el) : hydrate(el); }); }
+
+async function poll() {
+  try {
+    const r = await api("getChat", { chat_id: VIEWER });
+    const m = r.result && r.result.pinned_message;
+    if (m && m.text) { S = JSON.parse(m.text.split("\n")[1]); recvAt = Date.now(); online = true; onState(); }
+    else online = false;
+  } catch (e) { online = false; }
+  renderConn();
+}
+/* файл истории: сначала обычным запросом, а если браузер не пускает (CORS) - подключаем как скрипт (так CORS не нужен) */
+function parseDoc(t) {
+  const a = t.indexOf("("), b = t.lastIndexOf(")");
+  return JSON.parse(t.trimStart().startsWith("window.__PD") && a >= 0 && b > a ? t.slice(a + 1, b) : t);
+}
+function scriptDoc(url) {
+  return new Promise((res, rej) => {
+    let done = false; window.__PD = (o) => { done = true; res(o); };
+    const sc = document.createElement("script");
+    sc.src = url + (url.indexOf("?") >= 0 ? "&" : "?") + "t=" + Date.now();
+    sc.onerror = () => rej(new Error("браузер не пустил скрипт"));
+    sc.onload = () => { if (!done) rej(new Error("файл истории пуст")); if (sc.remove) sc.remove(); };
+    (document.head || document.body).appendChild(sc);
+  });
+}
+async function fetchDoc(url) {
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return parseDoc(await r.text());
+  } catch (e) {
+    try { return await scriptDoc(url); } catch (e2) { throw new Error((e && e.message) ? e.message + "; " + e2.message : e2.message); }
+  }
+}
+let docFail = "", docNext = 0;
+async function loadDoc(force) {
+  if (!S || loadingDoc) return;
+  if (!S.hd) { docFail = ""; return; }   // бот ещё не создал файл: пока покажем краткую историю из состояния
+  if (!force && Date.now() < docNext) return;
+  loadingDoc = true;
+  try {
+    const u = await fileUrl(S.hd);
+    if (!u) throw new Error("Telegram не отдал файл истории");
+    DOC = await fetchDoc(u); docVer = S.hv; docFail = ""; renderAll(true);
+  } catch (e) { docFail = (e && e.message) || String(e); docNext = Date.now() + 8000; renderHistory(); }
+  finally { loadingDoc = false; }
+}
+let sigQ = "";
+function onState() {
+  if (S.hv !== docVer) loadDoc();
+  const sig = JSON.stringify([S.q, S.ca, S.d, S.hv, S.h]);
+  if (sig !== sigQ) { sigQ = sig; renderAll(); }
+  const o = OR.id && S.q.find((x) => x.o === OR.id);
+  if (OR.id && !o && !OR.sending) closeOrder();
+  tick();
+}
+
+
+/* ---------- пиксельный фон: фото, которое печатается, вырисовывается точками (дизеринг) ----------
+   Как в Paper Shaders «Dithering»: упорядоченный дизеринг Байера 4x4, чёрно-белая палитра, крупные пиксели.
+   Пиксели вообще не читаются из картинки (поэтому CORS не нужен): складываем фото с матрицей Байера на canvas,
+   а порог делает CSS-фильтр grayscale+contrast на самом холсте. Видны боковые поля и просветы между карточками. */
+function makePX(cv, PS, FIT) {
+  const ctx = cv.getContext("2d"), WGT = 0.62;
+  const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const tile = document.createElement("canvas"); tile.width = tile.height = 4;
+  { const c = tile.getContext("2d"), B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (let i = 0; i < 16; i++) { const v = Math.round(255 * 0.5 * (B[i] + 0.5) / 16); c.fillStyle = "rgb(" + v + "," + v + "," + v + ")"; c.fillRect(i % 4, (i / 4) | 0, 1, 1); } }
+  let gw = 0, gh = 0, PC = null, imgs = [], mode = "idle", want = "", target = 0, rev = 0; const t0 = Date.now();
+  function size() {
+    const rc = cv.parentElement.getBoundingClientRect(); if (rc.width < 2 || rc.height < 2) { gw = 0; return; } gw = Math.ceil(rc.width / PS); gh = Math.ceil(rc.height / PS);
+    cv.width = gw; cv.height = gh; cv.style.width = gw * PS + "px"; cv.style.height = gh * PS + "px";
+    if (imgs.length) build();
+  }
+  function build() {   // фото (или полосы фото, если на листе несколько) + матрица Байера, целиком, один раз на лист
+    PC = document.createElement("canvas"); PC.width = gw; PC.height = gh;
+    const c = PC.getContext("2d"); c.fillStyle = "#000"; c.fillRect(0, 0, gw, gh);
+    const n = imgs.length || 1;
+    if (FIT) {   // карточка: фото целиком (с чёрными полями), несколько фото листа - мозаикой
+      const cols = Math.ceil(Math.sqrt(n * gw / gh)), rows = Math.ceil(n / cols), cw = gw / cols, ch = gh / rows;
+      imgs.forEach((im, i) => {
+        const dx = (i % cols) * cw + (n > 1 ? 1 : 0), dy = Math.floor(i / cols) * ch + (n > 1 ? 1 : 0), dw = cw - (n > 1 ? 2 : 0), dh = ch - (n > 1 ? 2 : 0), s = Math.min(dw / im.width, dh / im.height), w = im.width * s, h = im.height * s;
+        c.globalAlpha = WGT; c.drawImage(im, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+      });
+    } else {
+      const bh = gh / n;
+      imgs.forEach((im, i) => {
+        const dw = gw, dy = Math.floor(i * bh), dh = Math.ceil(bh) - (n > 1 ? 1 : 0), s = Math.max(dw / im.width, dh / im.height), sw = dw / s, sh = dh / s;
+        c.globalAlpha = WGT; c.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, dy, dw, dh);
+      });
+    }
+    c.globalAlpha = 1; c.globalCompositeOperation = "lighter"; c.fillStyle = c.createPattern(tile, "repeat"); c.fillRect(0, 0, gw, gh);
+  }
+  const loadEl = (u) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = u; });
+  async function load(k, items) {
+    const urls = []; for (const it of items.slice(0, 12)) { const u = await loadFirst(it); if (u) urls.push(u); }
+    if (want !== k) return;
+    const els = (await Promise.all(urls.map(loadEl))).filter(Boolean);
+    if (want !== k) return;
+    imgs = els; if (els.length) { build(); mode = "photo"; }
+  }
+  /* on: печатается страница с фото; fr: какая часть страницы уже «напечатана» (0..1) */
+  function set(k, items, fr, on) {
+    document.body.classList.toggle("printing", !!on);
+    if (!on || !items.length) { if (mode !== "idle") { mode = "idle"; want = ""; imgs = []; PC = null; } return; }
+    target = Math.max(0, Math.min(1, fr));
+    if (k !== want) { want = k; mode = "load"; rev = 0; PC = null; imgs = []; load(k, items); }
+  }
+  function idle(t) {   // в покое: медленно плывущие точечные пятна
+    ctx.globalAlpha = WGT;
+    [[0.2 + 0.12 * Math.sin(t * 0.35), 0.5 + 0.4 * Math.sin(t * 0.21), 0.55], [0.82 + 0.1 * Math.cos(t * 0.3), 0.5 + 0.42 * Math.cos(t * 0.17), 0.5]].forEach((b) => {
+      const x = b[0] * gw, y = b[1] * gh, r = b[2] * Math.max(gw, gh * 0.45), g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, gw, gh);
+    });
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = ctx.createPattern(tile, "repeat"); ctx.fillRect(0, 0, gw, gh); ctx.globalCompositeOperation = "source-over";
+  }
+  function frame() {
+    if (document.hidden || !gw) return;
+    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, gw, gh);
+    if (mode === "photo" && PC) {
+      rev += (target - rev) * 0.3; if (Math.abs(target - rev) < 0.003) rev = target;
+      const r = Math.max(0, Math.min(gh, Math.round(rev * gh)));
+      if (r > 0) ctx.drawImage(PC, 0, 0, gw, r, 0, 0, gw, r);
+      if (rev < 0.995) {   // печатающая головка: белая строка и россыпь точек над ней
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, Math.min(gh - 1, r), gw, 1);
+        if (!reduce) for (let i = 0; i < gw * 0.4; i++) ctx.fillRect((Math.random() * gw) | 0, Math.max(0, r - 1 - ((Math.random() * 6) | 0)), 1, 1);
+      }
+    } else if (mode === "load") {   // фото ещё грузится: горизонтальная «развёртка»
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, ((Date.now() / 20) | 0) % gh, gw, 1);
+    } else if (!reduce) idle((Date.now() - t0) / 1000); else idle(0);
+  }
+  size();
+  return { set, size, frame, get ok() { return gw > 0; }, reset() { mode = "idle"; want = ""; imgs = []; PC = null; } };
+}
+const PXB = (() => {
+  const all = [makePX($("px"), 4, false), makePX($("pxc"), 3, true)];   // правая половина (на широком экране) и карточка принтера
+  const resize = () => all.forEach((p) => p.size());
+  window.addEventListener("resize", resize);
+  if (tg && tg.onEvent) { try { tg.onEvent("viewportChanged", resize); } catch (e) {} }
+  setInterval(() => all.forEach((p) => p.frame()), 90);
+  return { set(k, items, fr, on) { all.forEach((p) => { if (!p.ok) p.size(); p.set(k, items, fr, on); }); }, size: resize };
+})();
+
+/* ---------- принтер: пиксельная картинка ---------- */
+const _R = (x, y, w, h, c, cl) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"' + (cl ? ' class="' + cl + '"' : "") + "/>";
+const _BOX = (x, y, w, h, f, s) => _R(x + 1, y, w - 2, 1, s) + _R(x + 1, y + h - 1, w - 2, 1, s) + _R(x, y + 1, 1, h - 2, s) + _R(x + w - 1, y + 1, 1, h - 2, s) + _R(x + 1, y + 1, w - 2, h - 2, f);
+const _SVG = (cls, vw, vh, w, h, body) => '<svg class="' + cls + '" viewBox="0 0 ' + vw + " " + vh + '" width="' + w + '" height="' + h + '" preserveAspectRatio="none" aria-hidden="true">' + body + "</svg>";
+function initPrinter() {
+  $("printer").innerHTML =
+    _SVG("p-tray", 26, 7, 130, 35, _BOX(3, 0, 20, 7, "#e9e9e5", "#f2f2f2") + _R(6, 3, 12, 1, "#9a9a96") + _R(6, 5, 8, 1, "#9a9a96") + _R(1, 3, 2, 4, "#555") + _R(23, 3, 2, 4, "#555") + _R(0, 6, 26, 1, "#f2f2f2")) +
+    _SVG("p-outtray", 38, 8, 190, 40, _BOX(0, 0, 38, 8, "#141414", "#8a8a8a") + _R(4, 5, 30, 1, "#333") + _R(1, 0, 36, 1, "#f2f2f2")) +
+    '<div class="p-out"><div class="sheet" id="sheet"><div class="sin" id="sheet-in"></div><div class="ph-ic">' + IC("image") + "</div></div></div>" +
+    _SVG("p-body", 59, 25, 236, 100,
+      _BOX(0, 0, 59, 9, "#4a4a4a", "#f2f2f2") + _BOX(0, 8, 59, 17, "#2a2a2a", "#f2f2f2") +
+      _BOX(4, 12, 22, 7, "#080808", "#8a8a8a") + _R(6, 14, 3, 3, "#c8c8c8") + _R(11, 14, 3, 3, "#9a9a9a") + _R(16, 14, 3, 3, "#c8c8c8") + _R(21, 14, 3, 3, "#707070") +
+      _BOX(34, 12, 21, 7, "#141414", "#8a8a8a") + _R(37, 14, 3, 3, "#777") + _R(42, 14, 3, 3, "#777") + _R(47, 13, 7, 5, "transparent", "led-glow") + _R(49, 14, 3, 3, "#555", "led-dot") +
+      _R(7, 21, 45, 2, "#000") + _R(7, 20, 45, 1, "#666")) +
+    '<div class="okb">' + IC("check") + "</div>";
+  $("qa").innerHTML =
+    '<button id="stop" class="danger" data-act="stop" aria-label="Остановить печать" disabled>' + IC("stop") + "<span>Стоп</span></button>" +
+    '<button data-act="goqueue" aria-label="Очередь">' + IC("queue") + '<span>Очередь</span><b class="bdg hide" id="qn">0</b></button>' +
+    '<button data-act="tab" data-k="history">' + IC("history") + "<span>История</span></button>" +
+    '<button data-act="tab" data-k="settings" id="qa-set">' + IC("sliders") + "<span>Настройки</span></button>";
+}
+
+/* ---------- вкладки ---------- */
+const TABS = ADMIN ? [["printer", "Принтер", "printer"], ["history", "История", "history"], ["settings", "Настройки", "sliders"], ["access", "Доступ", "users"]]
+                   : [["printer", "Принтер", "printer"], ["history", "Мои печати", "history"]];
+let tab = "printer";
+function renderTabs() {
+  $("tabs").innerHTML = TABS.map(([k, t, i]) => '<button data-act="tab" data-k="' + k + '" class="' + (k === tab ? "on" : "") + '">' + IC(i) + "<span>" + t + "</span></button>").join("");
+}
+function showTab(k) {
+  tab = k; $("ttl").textContent = (TABS.find((t) => t[0] === k) || TABS[0])[1];
+  ["printer", "history", "settings", "access"].forEach((t) => { const v = $("v-" + t); v.classList.toggle("hide", t !== k); if (t === k) { v.classList.remove("enter"); void v.offsetWidth; v.classList.add("enter"); } });
+  renderTabs();
+}
+
+/* ---------- принтер: лист выезжает так, как он напечатается ---------- */
+let shown = { key: "" }, swapping = false, swapId = 0, pendingKey = "";
+function activeDoc(n) { return DOC && DOC.active && DOC.active.o === n.o ? DOC.active : null; }
+function activeSet(n) {
+  const a = activeDoc(n), s = a && a.s;
+  return { smart: s ? s.smart !== false : (S ? S.d.s !== false : true), paper: s && PAPERS[s.paper] ? s.paper : (S && PAPERS[S.d.p] ? S.d.p : "a4"), layout: s && LAYOUTS[s.layout] ? s.layout : "full" };
+}
+/* какие фото стоят на листе cur: массив [маленькое превью, исходный файл] на каждый кадр */
+function pageItems(n, cur) {
+  const a = activeDoc(n);
+  if (a && a.pm && a.pm[cur] != null) {
+    const e = a.pm[cur], idx = Array.isArray(e) ? e : [e];
+    return idx.filter((i) => i >= 0 && a.fs[i] && (a.fs[i].k === "p" || a.fs[i].k === "i")).map((i) => [a.fs[i].th, a.fs[i].f].filter(Boolean));
+  }
+  return cur === 0 && n.th0 ? [[n.th0]] : [];
+}
+function pageFids(n, cur) { const it = pageItems(n, cur); return it.length ? it[0] : []; }
+async function swapSheet(key, items, n) {
+  const sh = $("sheet"), box = $("sheet-in"), my = ++swapId; swapping = true;
+  const same = sh.classList.contains("show") && shown.key && key && shown.key.split(":")[0] === key.split(":")[0];
+  if (same) {   // предыдущий лист падает в лоток, потом выезжает следующий
+    sh.style.setProperty("--r", "1"); await sleep(280); if (my !== swapId) return;
+    sh.classList.add("fall"); await sleep(280); if (my !== swapId) return;
+  }
+  sh.classList.add("reset"); sh.classList.remove("fall", "show"); sh.style.setProperty("--r", "0"); box.innerHTML = "";
+  const set = n ? activeSet(n) : { smart: true, paper: "a4", layout: "full" };
+  const pp = PAPERS[set.paper] || PAPERS.a4, H = 150, W = Math.round(H * pp[1] / pp[2]);
+  sh.style.width = W + "px"; sh.style.height = H + "px"; sh.style.marginLeft = -(W / 2) + "px";
+  sh.classList.toggle("empty", !items.length);
+  shown = { key };
+  let dims = null;
+  if (items.length) { const u = await loadFirst(items[0]); if (my !== swapId) return; dims = u ? dimCache.get(u) : null; }
+  const L = planFor(set.layout, set.paper, dims, set.smart);
+  paintSheet(box, L, items, { smart: set.smart, physical: true, hostW: W - 4, hostH: H - 4, bright: 0 });
+  void sh.offsetWidth; sh.classList.remove("reset"); swapping = false;
+  if (n && n.P) { const c = calcProg(n, recvAt, Date.now()).cur; [1, 2].forEach((d) => pageItems(n, Math.min(n.P - 1, c + d)).forEach((f) => loadFirst(f))); }   // следующие фото грузим заранее
+}
+function tick() {
+  const pc = $("pc"); if (!pc) return;
+  const n = S && S.now;
+  let led = "idle", lab = "Свободен", title = "Принтер свободен", sub = "", k = 0, P = 0, pct = "", pr = 0, stop = false, fr = 0, sheet = false, items = [], key = "";
+  if (!S) { title = "Нет связи"; lab = "Офлайн"; sub = TK ? "Жду данные от бота…" : "Открой приложение кнопкой «Панель принтера» в чате с ботом."; }
+  else if (n && n.busy) { led = "busy"; lab = "Занят"; title = "Принтер занят"; sub = "Печатается заказ другого человека"; }
+  else if (n) {
+    const p = calcProg(n, recvAt, Date.now()); P = p.P; k = p.k; pr = p.pr;
+    const who = n.t ? n.t : "";
+    if (n.st === "dl") { led = "busy"; lab = "Подготовка"; title = "Скачиваю файлы"; sub = (n.dl || 0) + " из " + (n.dn || 0) + (who ? " · " + who : ""); stop = true; k = 0; }
+    else if (n.st === "render") { led = "busy"; lab = "Подготовка"; title = "Готовлю листы"; sub = "Передано в очередь: " + (n.rd || 0) + " из " + P; stop = true; k = 0; pct = "0%"; }
+    else if (n.st === "print") { led = "busy"; lab = "Печать"; title = p.d >= P ? "Завершаю печать" : "Идёт печать"; sub = (who ? who + " · " : "") + "заказ #" + n.o; stop = true; pct = Math.round(pr * 100) + "%"; sheet = true; fr = p.fr; items = pageItems(n, p.cur); key = n.o + ":" + p.cur + ":" + items.length + ":" + (items[0] ? items[0][0] : ""); }
+    else if (n.st === "done") { led = "ok"; lab = "Готово"; title = "Готово"; sub = "Напечатано " + P + " из " + P + (who ? " · " + who : ""); pct = "100%"; pr = 1; k = P; sheet = true; fr = 1; items = pageItems(n, Math.max(0, P - 1)); key = n.o + ":" + Math.max(0, P - 1) + ":" + items.length + ":" + (items[0] ? items[0][0] : ""); }
+    else if (n.st === "stop") { lab = "Остановлено"; title = "Печать остановлена"; sub = "Напечатано " + (n.d || 0) + " из " + P; k = n.d || 0; pr = P ? k / P : 0; pct = Math.round(pr * 100) + "%"; }
+    else { led = "err"; lab = "Ошибка"; title = "Ошибка печати"; sub = "Подробности в чате с ботом"; }
+  } else { lab = "На связи · свободен"; title = "Принтер свободен"; sub = S.q && S.q.length ? "Ждут: " + S.q.length : ""; }
+  pc.dataset.led = led; $("pc-lab").textContent = lab; $("pc-title").textContent = title; $("pc-sub").textContent = sub;
+  $("cnt-k").textContent = k; $("cnt-p").textContent = P; $("cnt-pct").textContent = pct;
+  $("cnt").style.visibility = (n && !n.busy && P > 0 && n.st !== "dl") ? "visible" : "hidden";
+  $("bar").style.width = Math.round(pr * 1000) / 10 + "%";
+  $("stop").disabled = !stop;
+  const qn = S && S.q ? S.q.length : 0; $("qn").textContent = String(qn); $("qn").classList.toggle("hide", !qn);
+  pc.dataset.on = online ? "1" : "0";
+  PXB.set(key, items, fr, sheet && items.length > 0);   // боковые пиксели рисуют то же фото
+  if (key !== shown.key && key !== pendingKey) { pendingKey = key; swapSheet(key, items, n).then(() => { pendingKey = ""; }, () => { pendingKey = ""; }); }
+  if (!swapping) { const sh = $("sheet"); sh.classList.toggle("show", sheet); sh.style.setProperty("--r", String(Math.round(fr * 1000) / 1000)); }
+}
+
+/* ---------- очередь, история, настройки, доступ ---------- */
+function pendingDoc(o) { return DOC && (DOC.pending || []).find((x) => x.o === o); }
+function renderQueue() {
+  const q = (S && S.q) || [];
+  $("q-lab").classList.toggle("hide", false);
+  $("queue").innerHTML = q.length ? q.map((o) =>
+    '<button class="row" data-act="open" data-o="' + esc(o.o) + '"><div class="th" data-f="' + esc((o.th && o.th[0]) || "") + '">' + ((o.th && o.th[0]) ? "" : IC("image")) + '</div>' +
+    '<div class="rt"><b>' + esc(o.t || "Заказ") + "</b><span>" + files(o.n) + " · #" + esc(o.o) + "</span></div>" +
+    (o.w ? '<span class="chip">ждёт принтер</span>' : "") + IC("chev") + "</button>").join("")
+    : '<div class="empty">' + IC("queue") + "<div>Очередь пуста</div></div>";
+  hydrateAll($("queue"));
+}
+let openP = new Set(), autoOpened = false;
+const cnt = (o) => (o.n != null ? o.n : (o.fs || []).length);
+function personStats(p) { let f = 0; (p.orders || []).forEach((o) => { f += cnt(o); }); return { f, o: (p.orders || []).length, last: (p.orders && p.orders[0] && p.orders[0].ts) || 0 }; }
+function metaLine(s, c) { if (!s) return c > 1 ? "копий " + c : ""; return [QL[s.quality] || "", LAYOUTS[s.layout] && s.layout !== "full" ? LAYOUTS[s.layout].name : "", s.smart === false ? "по размеру кадра" : "", (PAPERS[s.paper] || [s.paper])[0], MEDIA[s.media] || "", "яркость " + (s.bright || 0) + "%", c > 1 ? "копий " + c : ""].filter(Boolean).join(" · "); }
+/* краткая история из самого состояния: работает, даже если файл истории не загрузился */
+function fallbackPeople() {
+  const people = {};
+  ((S && S.h) || []).forEach((h) => {
+    const id = String(h.p), p = (people[id] = people[id] || { name: (S.pn && S.pn[id]) || "Без имени", orders: [] });
+    p.orders.push({ o: h.o, ts: h.ts, res: ["ok", "stop", "err"][h.r] || "err", c: h.c, s: null, n: h.k, brief: true, fs: (h.t || []).map((f) => ({ f, th: f, k: "p", n: "" })), log: [] });
+  });
+  return people;
+}
+function historyHTML() {
+  const none = (t) => '<div class="empty">' + IC("history") + "<div>" + t + "</div></div>";
+  if (!S) return none("Нет связи с ботом");
+  const src = DOC ? DOC.people : ((S.h && S.h.length) ? fallbackPeople() : null);
+  if (!src) return docFail ? none("Не удалось загрузить историю<br><small>" + esc(docFail) + '</small><br><button class="link" data-act="reloadDoc">Повторить</button>') : (S.hd ? none("Загружаю историю…") : none(ADMIN ? "Пока никто ничего не печатал" : "Ты ещё ничего не печатал"));
+  const people = Object.entries(src || {}).map(([id, p]) => [id, p, personStats(p)]).filter((x) => x[2].o).sort((a, b) => b[2].last - a[2].last);
+  if (!people.length) return none(ADMIN ? "Пока никто ничего не печатал" : "Ты ещё ничего не печатал");
+  const banner = !DOC ? '<div class="card" style="padding:12px 14px"><div class="mut">Показаны последние заказы' + (docFail ? ". Полная история не загрузилась: " + esc(docFail) : ". Полная история загружается…") + '</div><button class="link" data-act="reloadDoc">Обновить</button></div>' : "";
+  const single = !ADMIN && people.length === 1;
+  if (!autoOpened) { autoOpened = true; openP.add(people[0][0]); }   // самый свежий человек раскрыт сразу: видно, что напечатано последним
+  return banner + people.map(([id, p, st]) => {
+    const open = single || openP.has(id);
+    const head = '<button class="row" data-act="person" data-p="' + esc(id) + '"><div class="av">' + esc((p.name || "?").trim().charAt(0).toUpperCase()) + "</div>" +
+      '<div class="rt"><b>' + esc(p.name || "Без имени") + "</b><span>" + photos(st.f) + " · " + plural(st.o, ["заказ", "заказа", "заказов"]) + " · " + fmtDay(st.last) + "</span></div>" + IC("down", "chev") + "</button>";
+    const body = open ? p.orders.map((o) => {
+      const r = RES[o.res] || RES.err;
+      const th = (o.fs || []).map((f, i) => ((f.k === "p" || f.k === "i")
+        ? '<div class="th" data-act="view" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"' + (f.th ? ' data-f2="' + esc(f.f) + '"' : "") + "></div>"
+        : '<div class="th" title="' + esc(f.n) + '">' + IC("file") + "</div>")).join("") + (o.brief && cnt(o) > (o.fs || []).length ? '<div class="th more">+' + (cnt(o) - (o.fs || []).length) + "</div>" : "");
+      return '<div class="ob"><div class="oh"><span class="od">' + fmtTs(o.ts) + " · #" + esc(o.o) + '</span><span class="chip ' + r[1] + '">' + r[0] + "</span></div>" +
+        '<div class="meta">' + esc(metaLine(o.s, o.c)) + '</div><div class="grid">' + th + "</div>" +
+        (ADMIN && (o.log || []).length ? '<button class="link" data-act="clog" data-p="' + esc(id) + '" data-o="' + esc(o.o) + '">' + IC("eye") + "Что видел клиент</button>" : "") + "</div>";
+    }).join("") : "";
+    return '<div class="person' + (open ? " open" : "") + '">' + head + '<div class="pbody">' + body + "</div></div>";
+  }).join("");
+}
+function renderHistory() { const el = $("v-history"); if (!el) return; el.innerHTML = '<div class="sec lab">' + (ADMIN ? "Кто что печатал" : "Мои печати") + "</div>" + historyHTML(); hydrateAll(el); }
+
+
+function renderAccess() {
+  if (!ADMIN) return;
+  const ca = (S && S.ca) || [];
+  $("v-access").innerHTML = '<div class="sec lab">Соадмины</div><div class="card"><div class="mut" style="margin-bottom:10px">Соадмин печатает сам: присылает файлы, жмёт «Готово» и выбирает настройки в сообщении. Видит только свои заказы.</div>' +
+    (ca.length ? ca.map((c) => '<div class="line" style="padding:8px 0"><div><b>' + esc(c.n || "Без имени") + '</b><div class="mut">' + esc(c.id) + '</div></div><button class="chip err" data-act="coDel" data-id="' + esc(c.id) + '">Убрать</button></div>').join("") : '<div class="mut" style="padding:6px 0">Пока никого</div>') +
+    '<input class="inp" id="co-id" inputmode="numeric" placeholder="Telegram ID, например 123456789" style="margin-top:12px"><button class="btn" data-act="coAdd" style="margin-top:10px">' + IC("plus") + 'Добавить соадмина</button></div>' +
+    '<div class="sec lab">Глазами клиента</div><div class="card"><div class="mut" style="margin-bottom:12px">Включает режим, в котором бот выглядит так же, как для обычного человека: то же меню и те же сообщения. Выйти: команда /asadmin.</div><button class="btn sec2" data-act="asClient">' + IC("eye") + "Открыть как клиент</button></div>";
+}
+function renderAll(docOnly) {
+  renderQueue(); renderHistory(); if (!docOnly) { renderSettings(); renderAccess(); }
+  const open = OR.id && pendingDoc(OR.id);
+  if (open && docOnly) { const changed = JSON.stringify([OR.files.length, OR.log]) !== JSON.stringify([open.fs.length, open.log || []]); if (changed) { OR.files = open.fs; OR.log = open.log || []; renderOrderBody(); } }
+}
+function renderConn() {
+  const c = $("conn"); c.classList.toggle("on", online); c.lastChild.textContent = online ? "на связи" : "нет связи";
+}
+
+
+/* ---------- настройки печати: те же элементы, что в окне Windows ---------- */
+let DF = { q: "medium", s: true, b: 35, p: "a4", m: "matte", c: 1, l: "full" }, dfInit = false;
+const OR = { id: "", files: [], sel: 0, dr: null, sending: false, log: [], pg: 0, pt: 0, sheets: [] };
+const target = (t) => (t === "dr" ? OR.dr : DF);
+function ddGrid(t, d) {
+  const dd = (lab, val, kind, dis) => '<button class="dd" data-act="pick" data-t="' + t + '" data-k="' + kind + '"' + (dis ? " disabled" : "") + "><small>" + lab + '</small><div class="v"><span>' + esc(val) + "</span>" + IC("down") + "</div></button>";
+  return '<div class="ddg">' + dd("Принтер:", (S && S.pr) || "Canon G3010 series", "printer", true) + dd("Размер бумаги:", (PAPERS[d.p] || PAPERS.a4)[0], "paper") +
+    dd("Качество:", QL[d.q] || QL.medium, "quality") + dd("Тип бумаги:", MEDIA[d.m] || d.m, "media") + "</div>";
+}
+function railHTML(t, d, h) {
+  return '<div class="rail' + (h ? " h" : "") + '">' + Object.keys(LAYOUTS).map((k) => '<button class="lt' + (k === d.l ? " on" : "") + '" data-act="layout" data-t="' + t + '" data-l="' + k + '">' + layoutIcon(k) + "<span>" + esc(LAYOUTS[k].name) + "</span></button>").join("") + "</div>";
+}
+function barHTML(t, d, withCopies) {
+  return '<div class="bar2">' + (withCopies ? '<div class="cp"><span>Копий каждого изображения:</span><div class="stp"><button data-act="copies" data-d="-1" aria-label="Меньше"' + (d.c <= 1 ? " disabled" : "") + ">" + IC("minus") + "</button><output>" + d.c + '</output><button data-act="copies" data-d="1" aria-label="Больше"' + (d.c >= 99 ? " disabled" : "") + ">" + IC("plus") + "</button></div></div>" : "") +
+    '<button class="ck' + (d.s ? "" : " on") + '" data-act="fit" data-t="' + t + '"><i>' + IC("check") + "</i><span>Изображение по размеру кадра</span></button>" +
+    '<button class="link" data-act="params" data-t="' + t + '">Параметры…</button></div>';
+}
+function changed(t) { if (t === "dr") renderOrderBody(); else renderSettings(); }
+function renderSettings() {
+  if (!ADMIN) return;
+  if (!dfInit && S) { DF = { q: S.d.q, s: S.d.s !== false, b: S.d.b, p: S.d.p, m: S.d.m, c: 1, l: S.d.l || "full" }; dfInit = true; }
+  $("v-settings").innerHTML = '<div class="sec lab">Настройки по умолчанию</div><div class="card">' + ddGrid("df", DF) +
+    '<div class="grp" style="margin-top:10px"><h3>Раскладка</h3>' + railHTML("df", DF, true) + "</div>" + barHTML("df", DF, false) + '</div><button class="btn" data-act="savedef">Сохранить</button>' +
+    '<p class="mut" style="text-align:center;margin-top:14px">Версия бота ' + esc(S ? S.v : "") + "</p>";
+}
+/* выпадающие списки: на телефоне - окно снизу */
+const PK = { t: "", kind: "", more: false };
+function pickOpts(kind, d, more) {
+  if (kind === "paper") {
+    const all = more || !PAPER_MAIN.includes(d.p), ks = all ? Object.keys(PAPERS) : PAPER_MAIN, o = ks.map((k) => ({ v: k, l: PAPERS[k][0], sub: PAPERS[k][3], on: d.p === k }));
+    if (!all) o.push({ more: 1, l: "Дополнительно..." }); return o;
+  }
+  if (kind === "quality") {
+    const all = more || QL_MORE.includes(d.q), ks = all ? ["auto", "medium", "low", "high"] : ["auto", "medium"], o = ks.map((k) => ({ v: k, l: QL[k], on: d.q === k }));
+    if (!all) o.push({ more: 1, l: "Другое (" + QL_MORE.length + ")" }); return o;
+  }
+  return Object.keys(MEDIA).map((k) => ({ v: k, l: MEDIA[k], on: d.m === k }));
+}
+const PK_TITLE = { paper: "Размер бумаги", quality: "Качество", media: "Тип бумаги" };
+function renderPicker() {
+  const d = target(PK.t); if (!d) return closePicker();
+  $("pk-box").innerHTML = '<div class="pk-t">' + PK_TITLE[PK.kind] + "</div>" + pickOpts(PK.kind, d, PK.more).map((o) => o.more
+    ? '<button class="po" data-act="pickmore"><span>' + esc(o.l) + "</span>" + IC("down") + "</button>"
+    : '<button class="po' + (o.on ? " on" : "") + '" data-act="pickset" data-v="' + esc(o.v) + '"><span>' + esc(o.l) + (o.sub ? "<small>" + esc(o.sub) + "</small>" : "") + "</span>" + (o.on ? IC("check") : "") + "</button>").join("");
+}
+function openPicker(t, kind) { PK.t = t; PK.kind = kind; PK.more = false; $("pk").classList.remove("hide"); renderPicker(); }
+function closePicker() { $("pk").classList.add("hide"); $("pk-box").innerHTML = ""; }
+function openParams(t) {
+  const d = target(t); if (!d) return; PK.t = t; PK.kind = "params";
+  $("pk-box").innerHTML = '<div class="pk-t">Параметры</div><div class="grp"><h3>Яркость печати</h3><div class="rng"><input type="range" min="0" max="100" step="5" value="' + d.b + '" data-act="bright" data-t="' + t + '" aria-label="Яркость"><output id="bv-' + t + '">' + d.b + "%</output></div>" +
+    '<div class="mut" style="margin-top:8px">Светлее, если принтер печатает темнее, чем на экране. Фотобумага на обычной бумаге тоже даёт тёмную печать.</div></div>' +
+    '<div class="grp"><h3>Поля принтера</h3><div class="mut">' + (S && S.mg ? "слева " + S.mg[0] + ", справа " + S.mg[1] + ", сверху " + S.mg[2] + ", снизу " + S.mg[3] + " мм" + (Math.max.apply(null, S.mg) < 1 ? " · безрамочная печать" : " · у «По размеру кадра» будет белая кайма") : "бот ещё не прислал") + "</div></div>" +
+    (ADMIN && t === "dr" ? '<button class="btn sec2" data-act="savedef2">Сделать настройками по умолчанию</button>' : "") + '<button class="btn" style="margin-top:10px" data-act="pkclose">Готово</button>';
+  $("pk").classList.remove("hide");
+}
+
+/* ---------- заказ: окно «Выберите способ печати изображений» ---------- */
+function openOrder(id, keep) {
+  const q = S && S.q.find((x) => x.o === id); if (!q) return;
+  const d = pendingDoc(id);
+  if (!keep || !OR.dr) OR.dr = { q: S.d.q, s: S.d.s !== false, b: S.d.b, p: S.d.p, m: S.d.m, c: 1, l: S.d.l || "full" };
+  OR.id = id; OR.files = d ? d.fs : []; OR.log = d ? d.log || [] : []; if (!keep) { OR.sel = 0; OR.pg = 0; } OR.sending = false;
+  const el = $("order"); el.classList.remove("hide"); document.body.style.overflow = "hidden";
+  el.innerHTML = '<div class="ov-top"><button class="ib" data-act="closeOrder" aria-label="Назад">' + IC("left") + '</button><div class="tt"><b>' + esc(q.t || "Заказ") + "</b><span>#" + esc(id) + " · " + files(q.n) + "</span></div></div>" +
+    '<div class="ov-body"><div class="dlgt">Выберите способ печати изображений</div><div id="o-dd"></div>' +
+    '<div class="dmain"><div class="pv" id="pv"><div class="paper" id="paper"></div></div><div id="o-rail"></div></div>' +
+    '<div class="pnav"><button class="ib2" data-act="pgprev" aria-label="Назад">' + IC("left") + '</button><span class="pn" id="pn"></span><button class="ib2" data-act="pgnext" aria-label="Вперёд">' + IC("chev") + "</button></div>" +
+    '<div class="strip" id="strip"></div><div id="o-bar"></div>' + (ADMIN ? '<div class="sec lab">Что видит клиент</div><div id="clog"></div>' : "") + "</div>" +
+    (q.w ? '<div class="actions"><div class="mut" style="flex:1;text-align:center;padding:14px 0">Заказ ждёт своей очереди на принтер</div></div>'
+          : '<div class="actions"><button class="btn danger" data-act="reject">' + IC("x") + "Отмена</button><button class=\"btn\" data-act=\"print\">" + IC("printer") + "Печать</button></div>");
+  renderOrderBody();
+  if (tg && tg.BackButton) { try { tg.BackButton.show(); tg.BackButton.onClick(closeOrder); } catch (e) {} }
+}
+function closeOrder() {
+  OR.id = ""; OR.dr = null; OR.files = []; $("order").classList.add("hide"); $("order").innerHTML = ""; document.body.style.overflow = ""; closePicker();
+  if (tg && tg.BackButton) { try { tg.BackButton.hide(); tg.BackButton.offClick(closeOrder); } catch (e) {} }
+}
+function renderOrderBody() {
+  const d = OR.dr; if (!d || !$("o-dd")) return;
+  $("o-dd").innerHTML = ddGrid("dr", d); $("o-rail").innerHTML = railHTML("dr", d, false); $("o-bar").innerHTML = barHTML("dr", d, true);
+  $("strip").innerHTML = OR.files.map((f, i) => ((f.k === "p" || f.k === "i")
+    ? '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '" data-f="' + esc(f.th || f.f) + '"' + (f.th ? ' data-f2="' + esc(f.f) + '"' : "") + "></div>"
+    : '<div class="th' + (i === OR.sel ? " sel" : "") + '" data-act="sel" data-i="' + i + '">' + IC("file") + "</div>")).join("");
+  hydrateAll($("strip")); paintPreview();
+  if (ADMIN && $("clog")) $("clog").innerHTML = OR.log.length ? OR.log.map((l) => '<div class="bub">' + esc(l[1]) + "<small>" + fmtTs(l[0]) + "</small></div>").join("") : '<div class="mut">Пока ничего не отправлено</div>';
+}
+/* превью листа: рамки считаются теми же формулами, что и в боте */
+async function paintPreview() {
+  const d = OR.dr, p = $("paper"); if (!d || !p) return; const my = ++OR.pt;
+  const sheets = OR.sheets = planSheets(OR.files, d.c, d.l); if (OR.pg >= sheets.length) OR.pg = Math.max(0, sheets.length - 1);
+  const sh = sheets[OR.pg], pvw = Math.max(120, ($("pv").clientWidth || 260) - 20), maxH = window.innerWidth < 700 ? 340 : 280;
+  $("pn").textContent = sheets.length ? (OR.pg + 1) + " из " + sheets.length + " стр" : "";
+  document.querySelectorAll('[data-act="pgprev"]').forEach((b) => (b.disabled = OR.pg <= 0)); document.querySelectorAll('[data-act="pgnext"]').forEach((b) => (b.disabled = OR.pg >= sheets.length - 1));
+  const fit = (W, H) => { const k = Math.min(pvw / W, maxH / H); p.style.width = Math.round(W * k) + "px"; p.style.height = Math.round(H * k) + "px"; };
+  if (!sh || sh.doc) {
+    const pp = PAPERS[d.p] || PAPERS.a4; fit(pp[1], pp[2]); const f = sh && OR.files[sh.idx[0]];
+    p.innerHTML = '<div class="nofile">' + (f ? IC("file") + "<div>" + esc(f.n || "Документ") + "<br>Печатается страницами целиком</div>" : (OR.files.length ? "" : "Превью загружается…")) + "</div>"; return;
+  }
+  const f0 = OR.files[sh.idx[0]], u = await loadFirst([f0.th, f0.f]); if (my !== OR.pt) return;
+  const L = planFor(d.l, d.p, u ? dimCache.get(u) : null, d.s); fit(L.W, L.H);
+  paintSheet(p, L, sh.idx.map((i) => [OR.files[i].f, OR.files[i].th].filter(Boolean)), { smart: d.s, bright: d.b, guides: true });
+}
+
+/* ---------- просмотр фото и журнал клиента ---------- */
+const VW = { list: [], i: 0 };
+function openViewer(pid, oid, i) {
+  const src = DOC ? DOC.people : fallbackPeople(), p = src[pid], o = p && p.orders.find((x) => x.o === oid); if (!o) return;
+  VW.list = o.fs.filter((f) => f.k === "p" || f.k === "i"); VW.i = Math.max(0, VW.list.findIndex((f) => f === o.fs[i]));
+  const v = $("viewer"); v.classList.remove("hide"); document.body.style.overflow = "hidden";
+  v.innerHTML = '<div class="vbar"><span id="v-c"></span><button class="ib" data-act="closeViewer" aria-label="Закрыть">' + IC("x") + '</button></div><div class="vimg" id="v-img"></div><div class="vnav"><button class="ib" data-act="vprev" aria-label="Назад">' + IC("left") + '</button><button class="ib" data-act="vnext" aria-label="Вперёд">' + IC("chev") + "</button></div>";
+  showViewer();
+}
+function showViewer() {
+  if (!VW.list.length) return; VW.i = (VW.i + VW.list.length) % VW.list.length;
+  $("v-c").textContent = (VW.i + 1) + " / " + VW.list.length; const img = $("v-img"), f = VW.list[VW.i]; img.style.backgroundImage = ""; const my = VW.i;
+  loadImg(f.th || f.f).then((u) => { if (VW.i === my && u) img.style.backgroundImage = 'url("' + u + '")'; });
+  loadImg(f.f).then((u) => { if (VW.i === my && u) img.style.backgroundImage = 'url("' + u + '")'; });
+}
+function closeViewer() { $("viewer").classList.add("hide"); $("viewer").innerHTML = ""; document.body.style.overflow = $("order").classList.contains("hide") ? "" : "hidden"; }
+function openLog(pid, oid) {
+  const p = DOC && DOC.people[pid], o = p && p.orders.find((x) => x.o === oid); if (!o) return;
+  const el = $("log"); el.classList.remove("hide"); document.body.style.overflow = "hidden";
+  el.innerHTML = '<div class="ov-top"><button class="ib" data-act="closeLog" aria-label="Назад">' + IC("left") + '</button><div class="tt"><b>Что видел клиент</b><span>' + esc(p.name) + " · #" + esc(oid) + '</span></div></div><div class="ov-body">' +
+    (o.log.length ? o.log.map((l) => '<div class="bub">' + esc(l[1]) + "<small>" + fmtTs(l[0]) + "</small></div>").join("") : '<div class="mut">Журнал пуст</div>') + "</div>";
+}
+
+
+let toastT;
+function toast(text) { let t = document.querySelector(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "alert"); document.body.appendChild(t); } t.textContent = text; clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 5000); }
+function send(obj) {
+  if (!tg || typeof tg.sendData !== "function") { toast("Открой приложение кнопкой «Панель принтера» в чате с ботом."); return false; }
+  try { tg.sendData(JSON.stringify(obj)); } catch (e) { toast("Не получилось отправить: " + e.message); return false; }
+  setTimeout(() => { OR.sending = false; toast("Не отправилось. Закрой приложение и открой его кнопкой «Панель принтера» (не из сообщения)."); }, 3000);
+  return true;
+}
+function confirmThen(msg, fn) { if (tg && tg.showConfirm) tg.showConfirm(msg, (ok) => ok && fn()); else if (confirm(msg)) fn(); }
+
+/* ---------- действия ---------- */
+function act(name, d) {
+  switch (name) {
+    case "tab": showTab(d.k); break;
+    case "goqueue": showTab("printer"); { const l = $("q-lab"); if (l && l.scrollIntoView) l.scrollIntoView({ behavior: "smooth", block: "start" }); } break;
+    case "open": openOrder(d.o); break;
+    case "closeOrder": closeOrder(); break;
+    case "sel": { OR.sel = +d.i; const k = OR.sheets.findIndex((s) => s.idx.includes(OR.sel)); if (k >= 0) OR.pg = k; $("strip").querySelectorAll(".th").forEach((e, i) => e.classList.toggle("sel", i === OR.sel)); paintPreview(); break; }
+    case "pgprev": OR.pg = Math.max(0, OR.pg - 1); paintPreview(); break;
+    case "pgnext": OR.pg = Math.min(Math.max(0, OR.sheets.length - 1), OR.pg + 1); paintPreview(); break;
+    case "layout": { const o = target(d.t); if (o && LAYOUTS[d.l]) { o.l = d.l; OR.pg = 0; changed(d.t); } break; }
+    case "fit": { const o = target(d.t); if (o) { o.s = !o.s; changed(d.t); } break; }
+    case "pick": openPicker(d.t, d.k); break;
+    case "pickmore": PK.more = true; renderPicker(); break;
+    case "pickset": { const o = target(PK.t); if (o) { o[{ paper: "p", quality: "q", media: "m" }[PK.kind]] = d.v; OR.pg = 0; closePicker(); changed(PK.t); } break; }
+    case "pkclose": closePicker(); break;
+    case "params": openParams(d.t); break;
+    case "savedef2": if (OR.dr) { const x = OR.dr; send({ a: "defaults", q: x.q, s: x.s, b: x.b, p: x.p, m: x.m, l: x.l }); } break;
+    case "bright": { const o = target(d.t); if (o) { o.b = +d.value; const out = $("bv-" + d.t); if (out) out.textContent = o.b + "%"; if (d.t === "dr") paintPreview(); } break; }
+    case "copies": if (OR.dr) { OR.dr.c = Math.max(1, Math.min(99, OR.dr.c + +d.d)); OR.pg = 0; renderOrderBody(); } break;
+    case "print": if (OR.id && !OR.sending) { OR.sending = true; const x = OR.dr; if (!send({ a: "print", o: OR.id, q: x.q, s: x.s, c: x.c, b: x.b, p: x.p, m: x.m, l: x.l })) OR.sending = false; } break;
+    case "reject": if (OR.id) confirmThen("Отклонить заказ? Клиент получит уведомление.", () => send({ a: "reject", o: OR.id })); break;
+    case "stop": confirmThen("Остановить печать? Задание будет удалено из очереди принтера.", () => send({ a: "stop" })); break;
+    case "person": if (openP.has(d.p)) openP.delete(d.p); else openP.add(d.p); renderHistory(); break;
+    case "view": openViewer(d.p, d.o, +d.i); break;
+    case "closeViewer": closeViewer(); break;
+    case "vprev": VW.i--; showViewer(); break;
+    case "vnext": VW.i++; showViewer(); break;
+    case "clog": openLog(d.p, d.o); break;
+    case "reloadDoc": docNext = 0; docFail = ""; renderHistory(); loadDoc(true); break;
+    case "closeLog": $("log").classList.add("hide"); $("log").innerHTML = ""; document.body.style.overflow = $("order").classList.contains("hide") ? "" : "hidden"; break;
+    case "savedef": send({ a: "defaults", q: DF.q, s: DF.s, b: DF.b, p: DF.p, m: DF.m, l: DF.l }); break;
+    case "coAdd": { const v = +(($("co-id") && $("co-id").value) || "").trim(); if (v > 0) send({ a: "coadmin", op: "add", id: v }); else toast("Введи Telegram ID: число из цифр"); break; }
+    case "coDel": confirmThen("Убрать соадмина?", () => send({ a: "coadmin", op: "del", id: +d.id })); break;
+    case "asClient": confirmThen("Включить режим клиента? Бот будет выглядеть как для обычного человека. Выйти: /asadmin.", () => send({ a: "asclient" })); break;
+  }
+}
+document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-act]"); if (t && t.tagName !== "INPUT" && !t.disabled) { act(t.dataset.act, t.dataset); } });
+document.addEventListener("input", (e) => { const t = e.target; if (t && t.dataset && t.dataset.act === "bright") act("bright", { t: t.dataset.t, value: t.value }); });
+window.addEventListener("resize", () => { if (OR.id) paintPreview(); });
+
+/* ---------- запуск ---------- */
+window.__app = { calcProg, pageItems, hydrateAll, parseDoc, fetchDoc, loadDoc, fallbackPeople, act, historyHTML, planFor, planSheets, gridPlan, fullPlan, LAYOUTS, PAPERS, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
+const SUN = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+const MOON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+let dark = true; try { dark = localStorage.getItem("theme") !== "light"; } catch (e) {}
+function setTheme(d) {
+  dark = d; document.body.classList.toggle("light", !d); $("theme").innerHTML = d ? SUN : MOON;
+  try { localStorage.setItem("theme", d ? "dark" : "light"); } catch (e) {}
+  try { if (tg) { tg.setHeaderColor && tg.setHeaderColor(d ? "#0a0a0a" : "#ffffff"); tg.setBackgroundColor && tg.setBackgroundColor(d ? "#0a0a0a" : "#ffffff"); } } catch (e) {}
+}
+$("theme").addEventListener("click", () => setTheme(!dark)); setTheme(dark);
+initPrinter();
+if (!ADMIN && $("qa-set")) $("qa-set").classList.add("hide");
+showTab("printer"); renderConn(); renderQueue();
+/* демо: если страницу открыли просто в браузере (не из Telegram и без токена), показываем пример с выдуманными фото */
+const DEMO = !TK && !(tg && tg.initData);
+if (DEMO) {
+  const mkImg = (i) => { const w = i % 2 ? 400 : 300, h = i % 2 ? 300 : 400, c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, "hsl(" + (i * 55 % 360) + ",70%,35%)"); g.addColorStop(1, "hsl(" + ((i * 55 + 90) % 360) + ",80%,70%)"); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.fillStyle = "rgba(255,255,255,.85)"; x.beginPath(); x.arc(w * .5, h * .42, Math.min(w, h) * .2, 0, 7); x.fill(); x.fillRect(w * .28, h * .66, w * .44, h * .3); return c.toDataURL("image/jpeg", .8); };
+  fileUrl = async (fid) => { const u = mkImg(+String(fid).replace(/\D/g, "") || 1); pathCache.set(fid, u); return u; };
+  const fs = [1, 2, 3, 4, 5, 6].map((i) => ({ f: "f" + i, th: "t" + i, k: "p", n: "photo" + i + ".jpg" }));
+  const st = qs.get("demo") || "print";
+  S = { v: "v22 демо", r: "admin", pr: "Canon G3010 series", mg: [0, 0, 0, 0], d: { q: "medium", s: true, b: 35, p: "a4", m: "matte", l: "full" }, hd: "", hv: 0, q: [{ o: "101", t: "Андрей", n: 6, th: ["t1"], w: 0 }, { o: "102", t: "Маша", n: 3, th: ["t2"], w: 0 }], h: [], ca: [] };
+  DOC = { v: 1, pending: [{ o: "101", u: 1, t: "Андрей", fs, log: [] }, { o: "102", u: 2, t: "Маша", fs: fs.slice(0, 3), log: [] }], active: { o: "100", u: 1, t: "Андрей", fs, pm: [[0, 1, 2, 3, 4, 5, 0, 1, 2], [3, 4, 5]], s: { smart: true, paper: "a4", media: "matte", layout: "wallet" } }, people: {} };
+  if (st !== "idle") S.now = { o: "100", u: 1, t: "Андрей", st: st === "done" ? "done" : "print", P: 2, d: 0, spp: 60, el: 20, th0: "t1" };
+  recvAt = Date.now(); online = true; docVer = 0;
+}
+if (DEMO) { renderAll(); tick(); } else if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
+setInterval(() => { if (S) tick(); }, 500);
+</script>
+</body>
+</html>
