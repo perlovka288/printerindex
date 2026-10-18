@@ -37,7 +37,7 @@ body.light .paper{box-shadow:4px 4px 0 #bbb,0 0 0 2px #000}
 body.printing #px{opacity:1}
 #pxc{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.55;transition:opacity .6s steps(6)}
 body.printing #pxc{opacity:1}body.light #pxc{filter:grayscale(1) contrast(1000) invert(1)}
-.pxc-wrap{display:none;position:relative;height:min(62vw,270px);margin:12px 0 4px;border:2px solid var(--line2);background:var(--pure);overflow:hidden}
+.pxc-wrap{display:block;position:relative;height:clamp(230px,min(62vw,50vh),300px);margin:12px 0 4px;border:2px solid var(--line2);background:var(--pure);overflow:hidden}
 .top,main,.tabs{position:relative;z-index:2}
 
 /* каркас */
@@ -73,7 +73,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .pc[data-led=busy] .led{background:var(--tx);animation:blink .6s steps(2) infinite}
 .pc[data-led=ok] .led{background:var(--ok)}.pc[data-led=err] .led{background:var(--bad)}
 .pc-title{font:400 13px/1.4 var(--pfont);margin:10px 0 0}
-.printer{position:relative;width:236px;height:268px;margin:12px auto 0}
+.printer{display:none;position:relative;width:236px;height:268px;margin:12px auto 0}
 .printer svg{display:block;position:absolute;shape-rendering:crispEdges}
 .p-tray{left:53px;top:0;width:130px;height:35px;z-index:1}
 .p-body{left:0;top:14px;width:236px;height:100px;z-index:3}
@@ -215,7 +215,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 @media (max-width:699px){
   :root{--rail:0px}
   .right{display:none}
-  .printer{display:none}.pxc-wrap{display:block}
+  
   .top{margin:0;padding:10px 52px 10px 14px}
   .top .th2{top:calc(7px + env(safe-area-inset-top,0px))}
   main{padding:14px 12px calc(84px + env(safe-area-inset-bottom,0px))}
@@ -663,14 +663,12 @@ function makePX(cv, PS, FIT) {
   return { set, size, frame, get ok() { return gw > 0; }, reset() { mode = "idle"; want = ""; imgs = []; PC = null; } };
 }
 const PXB = (() => {
-  const A = makePX($("px"), 4, false), B = makePX($("pxc"), 3, true), mq = window.matchMedia ? matchMedia("(max-width:699px)") : { matches: false };
-  let last = null;
-  const cur = () => (mq.matches ? B : A);
-  const resize = () => { A.size(); B.size(); };
+  const all = [makePX($("px"), 4, false), makePX($("pxc"), 3, true)];   // правая половина (на широком экране) и карточка принтера
+  const resize = () => all.forEach((p) => p.size());
   window.addEventListener("resize", resize);
   if (tg && tg.onEvent) { try { tg.onEvent("viewportChanged", resize); } catch (e) {} }
-  setInterval(() => cur().frame(), 90);
-  return { set(k, items, fr, on) { const c = cur(); if (last && last !== c) last.reset(); last = c; if (!c.ok) c.size(); c.set(k, items, fr, on); }, size: resize };
+  setInterval(() => all.forEach((p) => p.frame()), 90);
+  return { set(k, items, fr, on) { all.forEach((p) => { if (!p.ok) p.size(); p.set(k, items, fr, on); }); }, size: resize };
 })();
 
 /* ---------- принтер: пиксельная картинка ---------- */
@@ -1037,7 +1035,21 @@ $("theme").addEventListener("click", () => setTheme(!dark)); setTheme(dark);
 initPrinter();
 if (!ADMIN && $("qa-set")) $("qa-set").classList.add("hide");
 showTab("printer"); renderConn(); renderQueue();
-if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
+/* демо: если страницу открыли просто в браузере (не из Telegram и без токена), показываем пример с выдуманными фото */
+const DEMO = !TK && !(tg && tg.initData);
+if (DEMO) {
+  const mkImg = (i) => { const w = i % 2 ? 400 : 300, h = i % 2 ? 300 : 400, c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, "hsl(" + (i * 55 % 360) + ",70%,35%)"); g.addColorStop(1, "hsl(" + ((i * 55 + 90) % 360) + ",80%,70%)"); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.fillStyle = "rgba(255,255,255,.85)"; x.beginPath(); x.arc(w * .5, h * .42, Math.min(w, h) * .2, 0, 7); x.fill(); x.fillRect(w * .28, h * .66, w * .44, h * .3); return c.toDataURL("image/jpeg", .8); };
+  fileUrl = async (fid) => { const u = mkImg(+String(fid).replace(/\D/g, "") || 1); pathCache.set(fid, u); return u; };
+  const fs = [1, 2, 3, 4, 5, 6].map((i) => ({ f: "f" + i, th: "t" + i, k: "p", n: "photo" + i + ".jpg" }));
+  const st = qs.get("demo") || "print";
+  S = { v: "v22 демо", r: "admin", pr: "Canon G3010 series", mg: [0, 0, 0, 0], d: { q: "medium", s: true, b: 35, p: "a4", m: "matte", l: "full" }, hd: "", hv: 0, q: [{ o: "101", t: "Андрей", n: 6, th: ["t1"], w: 0 }, { o: "102", t: "Маша", n: 3, th: ["t2"], w: 0 }], h: [], ca: [] };
+  DOC = { v: 1, pending: [{ o: "101", u: 1, t: "Андрей", fs, log: [] }, { o: "102", u: 2, t: "Маша", fs: fs.slice(0, 3), log: [] }], active: { o: "100", u: 1, t: "Андрей", fs, pm: [[0, 1, 2, 3, 4, 5, 0, 1, 2], [3, 4, 5]], s: { smart: true, paper: "a4", media: "matte", layout: "wallet" } }, people: {} };
+  if (st !== "idle") S.now = { o: "100", u: 1, t: "Андрей", st: st === "done" ? "done" : "print", P: 2, d: 0, spp: 60, el: 20, th0: "t1" };
+  recvAt = Date.now(); online = true; docVer = 0;
+}
+if (DEMO) { renderAll(); tick(); } else if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
 setInterval(() => { if (S) tick(); }, 500);
 </script>
 </body>
