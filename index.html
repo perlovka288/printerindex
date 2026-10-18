@@ -6,9 +6,6 @@
 <meta name="color-scheme" content="dark">
 <meta name="referrer" content="no-referrer">
 <title>Панель принтера</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
@@ -17,11 +14,11 @@
   --ok:#8dffb0;--bad:#ff7070;--warn:#ffd36b;
   --rail:22px;
   --notch:polygon(0 2px,2px 2px,2px 0,calc(100% - 2px) 0,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0 calc(100% - 2px));
-  --font:"Pixelify Sans","VT323","Courier New",ui-monospace,monospace;
-  --pfont:"Press Start 2P","Pixelify Sans","Courier New",monospace;
+  --font:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;
+  --pfont:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;--card:rgba(14,14,14,.93);--bar:rgba(10,10,10,.96);--pure:#000;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.3 var(--font);-webkit-font-smoothing:none;font-smooth:never;overflow-x:hidden}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 var(--font);-webkit-font-smoothing:none;font-smooth:never;overflow-x:hidden}
 body{min-height:100vh;overscroll-behavior:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
 button:focus-visible,input:focus-visible{outline:2px dashed #fff;outline-offset:2px}
@@ -29,32 +26,37 @@ button:focus-visible,input:focus-visible{outline:2px dashed #fff;outline-offset:
 .ic{display:inline-block;fill:currentColor;flex:none;shape-rendering:crispEdges;vertical-align:middle}
 .px{border:2px solid var(--bc,var(--line));clip-path:var(--notch)}
 
+body.light{--bg:#fff;--s1:#f5f5f5;--s2:#ececec;--s3:#e0e0e0;--line:#c9c9c9;--line2:#555;--tx:#000;--mut:#555;--dim:#999;--ok:#0a8a3a;--bad:#c62828;--warn:#9a6b00;--card:rgba(255,255,255,.94);--bar:rgba(255,255,255,.97);--pure:#fff}
+body.light #px{filter:grayscale(1) contrast(1000) invert(1)}
+body.light .printer>svg{filter:invert(1)}
+body.light .paper{box-shadow:4px 4px 0 #bbb,0 0 0 2px #000}
 /* пиксельный фон: фото, которое печатается, вырисовывается точками по бокам */
-#px{position:fixed;left:0;top:0;z-index:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.4;transition:opacity .6s steps(6);pointer-events:none}
+.right{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#px{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.4;transition:opacity .6s steps(6);pointer-events:none}
 body.printing #px{opacity:1}
 .top,main,.tabs{position:relative;z-index:2}
 
 /* каркас */
-.top{position:sticky;top:0;z-index:5;margin:0 var(--rail);display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:rgba(10,10,10,.94);border-bottom:2px solid var(--line)}
+.top{position:sticky;top:0;z-index:5;margin:0 var(--rail);display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:var(--bar);border-bottom:2px solid var(--line)}
 .ttl{font:400 12px/1.2 var(--pfont);letter-spacing:.02em;text-transform:uppercase}
 .conn{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--mut)}
 .conn i{width:8px;height:8px;background:var(--dim)}
 .conn.on i{background:var(--ok);animation:blink 1.4s steps(2) infinite}
 @keyframes blink{50%{opacity:.35}}
 main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
-.tabs{position:fixed;left:var(--rail);right:var(--rail);bottom:0;z-index:6;display:flex;gap:4px;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(10,10,10,.96);border-top:2px solid var(--line)}
+.tabs{position:fixed;left:var(--rail);right:var(--rail);bottom:0;z-index:6;display:flex;gap:4px;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));background:var(--bar);border-top:2px solid var(--line)}
 .tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;font-size:12px;color:var(--mut)}
 .tabs button.on{color:var(--bg);background:var(--tx)}
 .tabs button .ic{width:24px;height:24px}
 
-.card{--bc:var(--line);background:rgba(14,14,14,.93);padding:16px;margin:0 0 14px;border:2px solid var(--bc);clip-path:var(--notch)}
+.card{--bc:var(--line);background:var(--card);padding:16px;margin:0 0 14px;border:2px solid var(--bc);clip-path:var(--notch)}
 .lab{font:400 10px/1.4 var(--pfont);letter-spacing:.02em;text-transform:uppercase;color:var(--mut)}
 .sec{margin:20px 2px 10px}
 .mut{color:var(--mut);font-size:14px}
 .btn{--bc:var(--tx);display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;background:var(--tx);color:var(--bg);font-weight:600;border:2px solid var(--bc);clip-path:var(--notch);box-shadow:inset -3px -3px 0 rgba(0,0,0,.28);transition:transform .08s steps(2)}
 .btn:active{transform:translate(2px,2px);box-shadow:none}
 .btn.sec2{--bc:var(--line2);background:var(--s3);color:var(--tx)}
-.btn.danger{--bc:var(--bad);background:#1a0c0c;color:var(--bad)}
+.btn.danger{--bc:var(--bad);background:var(--s2);color:var(--bad)}
 .btn[disabled]{opacity:.4}
 .link{display:inline-flex;align-items:center;gap:7px;padding:8px 0;color:var(--mut);font-size:14px;text-decoration:underline;text-decoration-style:dotted}
 .chip{display:inline-block;padding:2px 8px;border:2px solid var(--line);font-size:13px;color:var(--mut);white-space:nowrap}
@@ -97,7 +99,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .pc[data-led=ok] .okb{transform:scale(1)}
 .cnt{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-top:6px;font-variant-numeric:tabular-nums;font-family:var(--pfont)}
 .cnt b{font-size:24px;font-weight:400}.cnt span{font-size:14px;color:var(--mut)}.cnt .pct{margin-left:8px;font-size:11px}
-.bar{height:16px;border:2px solid var(--line2);margin:12px 2px 10px;padding:2px;background:#000}
+.bar{height:16px;border:2px solid var(--line2);margin:12px 2px 10px;padding:2px;background:var(--pure)}
 .bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--tx) 0 8px,transparent 8px 10px);transition:width .9s steps(12)}
 .pc[data-led=ok] .bar i{background:repeating-linear-gradient(90deg,var(--ok) 0 8px,transparent 8px 10px)}
 .pc-sub{text-align:center;color:var(--mut);font-size:14px;min-height:19px}
@@ -113,7 +115,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 #qa{margin-top:14px}
 
 /* списки */
-.row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin-bottom:10px;background:rgba(14,14,14,.93);border:2px solid var(--line);clip-path:var(--notch)}
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin-bottom:10px;background:var(--card);border:2px solid var(--line);clip-path:var(--notch)}
 .row:active{background:var(--s3)}
 .row .rt{flex:1;min-width:0}.row .rt b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row .rt span{color:var(--mut);font-size:14px}
 .row>.ic{color:var(--dim)}
@@ -122,7 +124,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .empty{display:grid;place-items:center;gap:8px;padding:34px 10px;color:var(--mut);text-align:center}
 .empty .ic{width:36px;height:36px;color:var(--dim)}
 .av{width:42px;height:42px;background:var(--s3);display:grid;place-items:center;font:400 14px var(--pfont);flex:none;border:2px solid var(--line2)}
-.person{margin-bottom:10px;background:rgba(14,14,14,.93);border:2px solid var(--line);clip-path:var(--notch)}
+.person{margin-bottom:10px;background:var(--card);border:2px solid var(--line);clip-path:var(--notch)}
 .person>.row{margin:0;border:0;clip-path:none;background:none}
 .person .chev{transition:transform .2s steps(3)}.person.open .chev{transform:rotate(180deg)}
 .pbody{display:none;padding:2px 12px 12px;border-top:2px solid var(--line)}.person.open .pbody{display:block}
@@ -145,7 +147,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 @media (hover:hover){.dd:not([disabled]):hover .v{background:var(--s3)}}
 .dd:not([disabled]):active .v{background:var(--tx);color:var(--bg)}
 .dmain{display:grid;grid-template-columns:minmax(0,1fr) 98px;gap:10px;margin-top:12px}
-.pv{position:relative;display:grid;place-items:center;min-height:300px;background:#000;border:2px solid var(--line);padding:8px}
+.pv{position:relative;display:grid;place-items:center;min-height:300px;background:var(--pure);border:2px solid var(--line);padding:8px}
 .paper{position:relative;background:#f4f4f1;overflow:hidden;transition:width .2s steps(3),height .2s steps(3);box-shadow:4px 4px 0 #000,0 0 0 2px #fff}
 .paper .nofile{position:absolute;inset:0;display:grid;place-items:center;color:#7a7a76;text-align:center;font-size:13px;padding:10px;z-index:3}
 .rail{height:300px;overflow-y:auto;background:var(--s1);border:2px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin}
@@ -160,10 +162,10 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .pnav .ib2:active{background:var(--tx);color:var(--bg)}.pnav .ib2[disabled]{opacity:.3}
 .pnav .ib2 .ic{width:14px;height:20px}
 .pnav .pn{min-width:110px;text-align:center;color:var(--mut);font-size:14.5px}
-.bar2{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:12px;padding:12px;background:rgba(14,14,14,.93);border:2px solid var(--line)}
+.bar2{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:12px;padding:12px;background:var(--card);border:2px solid var(--line)}
 .bar2 .cp{display:flex;align-items:center;gap:8px;font-size:14.5px}
 .ck{display:flex;align-items:center;gap:9px;font-size:14.5px;text-align:left}
-.ck i{width:20px;height:20px;border:2px solid var(--line2);background:#000;display:grid;place-items:center;flex:none}
+.ck i{width:20px;height:20px;border:2px solid var(--line2);background:var(--pure);display:grid;place-items:center;flex:none}
 .ck i .ic{width:14px;height:12px;color:var(--bg);display:none}
 .ck.on i{background:var(--tx)}.ck.on i .ic{display:block}
 .rng{display:flex;align-items:center;gap:12px}.rng input{flex:1;accent-color:#fff}.rng output{min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
@@ -206,14 +208,26 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .po .ic{width:16px;height:14px}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .enter{animation:rise .24s steps(4) both}
-@media (min-width:700px){:root{--rail:max(22px,calc((100vw - 560px) / 2))}}
+@media (min-width:700px){
+  :root{--rail:0px}
+  .right{left:50%}
+  .top{margin:0 50vw 0 0}main{margin-right:50vw;padding-left:22px;padding-right:22px}.tabs{left:0;right:50vw}
+  .ov,.pk{right:50%}.actions{right:50%}
+}
+.top .th2{position:absolute;right:10px;top:calc(8px + env(safe-area-inset-top,0px));padding:6px;border-radius:50%}
+.top .th2 svg{display:block}@media (hover:hover){.top .th2:hover{background:var(--s3)}}
+.top{padding-right:52px}
+/* нижние «ссылки» вместо иконок, как внизу левой панели в промте */
+.tabs{justify-content:flex-start;gap:20px;border-top:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.tabs button{flex:none;flex-direction:row;font-size:16px;padding:4px 0}
+.tabs button .ic{display:none}.tabs button.on{background:none;color:var(--tx);text-decoration:underline;text-underline-offset:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<canvas id="px" aria-hidden="true"></canvas>
+<div class="right"><canvas id="px" aria-hidden="true"></canvas></div>
 
-<header class="top"><div class="ttl" id="ttl">Принтер</div><div class="conn" id="conn"><i></i><span>нет связи</span></div></header>
+<header class="top"><div class="ttl" id="ttl">Принтер</div><div class="conn" id="conn"><i></i><span>нет связи</span></div><button class="th2" id="theme" aria-label="Сменить тему"></button></header>
 
 <main>
   <section id="v-printer">
@@ -559,7 +573,7 @@ const PXB = (() => {
     for (let i = 0; i < 16; i++) { const v = Math.round(255 * 0.5 * (B[i] + 0.5) / 16); c.fillStyle = "rgb(" + v + "," + v + "," + v + ")"; c.fillRect(i % 4, (i / 4) | 0, 1, 1); } }
   let gw = 0, gh = 0, PC = null, imgs = [], mode = "idle", want = "", target = 0, rev = 0; const t0 = Date.now();
   function size() {
-    gw = Math.ceil((window.innerWidth || 360) / PS) + 1; gh = Math.ceil((window.innerHeight || 640) / PS) + 1;
+    const rc = cv.parentElement.getBoundingClientRect(); gw = Math.ceil((rc.width || window.innerWidth || 360) / PS) + 1; gh = Math.ceil((rc.height || window.innerHeight || 640) / PS) + 1;
     cv.width = gw; cv.height = gh; cv.style.width = gw * PS + "px"; cv.style.height = gh * PS + "px";
     if (imgs.length) build();
   }
@@ -969,6 +983,15 @@ window.addEventListener("resize", () => { if (OR.id) paintPreview(); });
 
 /* ---------- запуск ---------- */
 window.__app = { calcProg, pageItems, hydrateAll, parseDoc, fetchDoc, loadDoc, fallbackPeople, act, historyHTML, planFor, planSheets, gridPlan, fullPlan, LAYOUTS, PAPERS, get S() { return S; }, set S(v) { S = v; }, get DOC() { return DOC; }, set DOC(v) { DOC = v; }, renderAll, tick, openOrder, OR, mono };
+const SUN = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+const MOON = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+let dark = true; try { dark = localStorage.getItem("theme") !== "light"; } catch (e) {}
+function setTheme(d) {
+  dark = d; document.body.classList.toggle("light", !d); $("theme").innerHTML = d ? SUN : MOON;
+  try { localStorage.setItem("theme", d ? "dark" : "light"); } catch (e) {}
+  try { if (tg) { tg.setHeaderColor && tg.setHeaderColor(d ? "#0a0a0a" : "#ffffff"); tg.setBackgroundColor && tg.setBackgroundColor(d ? "#0a0a0a" : "#ffffff"); } } catch (e) {}
+}
+$("theme").addEventListener("click", () => setTheme(!dark)); setTheme(dark);
 initPrinter();
 if (!ADMIN && $("qa-set")) $("qa-set").classList.add("hide");
 showTab("printer"); renderConn(); renderQueue();
