@@ -208,6 +208,21 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .po .ic{width:16px;height:14px}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .enter{animation:rise .24s steps(4) both}
+/* телефон: сверху пиксельная панель с дизерингом (там вырисовывается печатаемое фото), под ней интерфейс */
+@media (max-width:699px){
+  :root{--rail:0px;--ban:max(150px,22vh)}
+  @supports (height:1dvh){:root{--ban:max(150px,22dvh)}}
+  .right{inset:0 0 auto 0;height:var(--ban);border-bottom:2px solid var(--line2)}
+  .top{position:fixed;left:0;right:0;top:var(--ban);margin:0;padding:10px 52px 10px 14px}
+  main{padding:calc(var(--ban) + 62px) 14px calc(84px + env(safe-area-inset-bottom,0px))}
+  .tabs{left:0;right:0;gap:16px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));overflow-x:auto}
+  .tabs button{font-size:15px;white-space:nowrap}
+  .top .th2{top:calc(var(--ban) + 7px)}
+  .ov-top{padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  .dmain{grid-template-columns:minmax(0,1fr) 92px}
+  .lt svg{width:60px;height:46px}
+  .bar2{gap:10px 12px}
+}
 @media (min-width:700px){
   :root{--rail:0px}
   .right{left:50%}
