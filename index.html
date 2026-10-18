@@ -18,7 +18,7 @@
   --pfont:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;--card:rgba(14,14,14,.93);--bar:rgba(10,10,10,.96);--pure:#000;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 var(--font);-webkit-font-smoothing:none;font-smooth:never;overflow-x:hidden}
+html,body{max-width:100%;touch-action:pan-y;overscroll-behavior-x:none;margin:0;background:var(--bg);color:var(--tx);font:15px/1.35 var(--font);-webkit-font-smoothing:none;font-smooth:never;overflow-x:hidden}
 body{min-height:100vh;overscroll-behavior:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
 button:focus-visible,input:focus-visible{outline:2px dashed #fff;outline-offset:2px}
@@ -32,8 +32,12 @@ body.light .printer>svg{filter:invert(1)}
 body.light .paper{box-shadow:4px 4px 0 #bbb,0 0 0 2px #000}
 /* пиксельный фон: фото, которое печатается, вырисовывается точками по бокам */
 .right{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#px,#pxc{contain:strict;transform:translateZ(0)}
 #px{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.4;transition:opacity .6s steps(6);pointer-events:none}
 body.printing #px{opacity:1}
+#pxc{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.55;transition:opacity .6s steps(6)}
+body.printing #pxc{opacity:1}body.light #pxc{filter:grayscale(1) contrast(1000) invert(1)}
+.pxc-wrap{display:none;position:relative;height:min(62vw,270px);margin:12px 0 4px;border:2px solid var(--line2);background:var(--pure);overflow:hidden}
 .top,main,.tabs{position:relative;z-index:2}
 
 /* каркас */
@@ -74,7 +78,6 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .p-tray{left:53px;top:0;width:130px;height:35px;z-index:1}
 .p-body{left:0;top:14px;width:236px;height:100px;z-index:3}
 .p-outtray{left:23px;top:112px;width:190px;height:40px;z-index:1}
-.pc[data-led=busy] .p-body{animation:vib .18s steps(2) infinite}
 @keyframes vib{50%{transform:translateY(2px)}}
 .led-dot{fill:#555}.led-glow{fill:transparent}
 .pc[data-on="1"] .led-dot{fill:#6fd39a}
@@ -137,7 +140,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .grp{padding:14px 0;border-bottom:2px dotted var(--line)}.grp:last-child{border-bottom:0}
 .grp h3{margin:0 0 9px;font-size:14px;font-weight:600;color:var(--mut)}
 .dlgt{font:400 11px/1.5 var(--pfont);margin:2px 0 12px;color:var(--tx)}
-.ddg{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.ddg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
 .dd{display:block;width:100%}
 .dd small{display:block;font-size:12.5px;color:var(--mut);margin-bottom:3px}
 .dd .v{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px;padding:0 8px 0 10px;background:var(--s2);border:2px solid var(--line2);font-size:14.5px}
@@ -208,20 +211,26 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .po .ic{width:16px;height:14px}
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .enter{animation:rise .24s steps(4) both}
-/* телефон: сверху пиксельная панель с дизерингом (там вырисовывается печатаемое фото), под ней интерфейс */
+/* телефон: вместо картинки принтера в карточке пиксель-арт того, что печатается; настройки в одну колонку */
 @media (max-width:699px){
-  :root{--rail:0px;--ban:max(150px,22vh)}
-  @supports (height:1dvh){:root{--ban:max(150px,22dvh)}}
-  .right{inset:0 0 auto 0;height:var(--ban);border-bottom:2px solid var(--line2)}
-  .top{position:fixed;left:0;right:0;top:var(--ban);margin:0;padding:10px 52px 10px 14px}
-  main{padding:calc(var(--ban) + 62px) 14px calc(84px + env(safe-area-inset-bottom,0px))}
+  :root{--rail:0px}
+  .right{display:none}
+  .printer{display:none}.pxc-wrap{display:block}
+  .top{margin:0;padding:10px 52px 10px 14px}
+  .top .th2{top:calc(7px + env(safe-area-inset-top,0px))}
+  main{padding:14px 12px calc(84px + env(safe-area-inset-bottom,0px))}
+  .card{padding:14px 12px}
   .tabs{left:0;right:0;gap:16px;padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));overflow-x:auto}
   .tabs button{font-size:15px;white-space:nowrap}
-  .top .th2{top:calc(var(--ban) + 7px)}
   .ov-top{padding-top:calc(10px + env(safe-area-inset-top,0px))}
-  .dmain{grid-template-columns:minmax(0,1fr) 92px}
-  .lt svg{width:60px;height:46px}
-  .bar2{gap:10px 12px}
+  .dmain{grid-template-columns:minmax(0,1fr)}
+  .dmain .rail{height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .dmain .rail .lt{width:92px;flex:none}
+  .pv{min-height:240px}
+  .lt svg{width:64px;height:48px}
+  .dd .v{min-height:44px}.stp button{width:44px;height:42px}.ck i{width:24px;height:24px}.pnav .ib2{width:44px;height:40px}
+  .bar2{flex-direction:column;align-items:stretch;gap:12px}
+  .actions .btn{min-height:52px}
 }
 @media (min-width:700px){
   :root{--rail:0px}
@@ -249,6 +258,7 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
     <div class="card pc" id="pc" data-led="idle">
       <div class="pc-head"><i class="led"></i><span class="lab" id="pc-lab">Свободен</span></div>
       <div class="pc-title" id="pc-title">Принтер свободен</div>
+      <div class="pxc-wrap"><canvas id="pxc" aria-hidden="true"></canvas></div>
       <div class="printer" id="printer"></div>
       <div class="cnt" id="cnt"><b id="cnt-k">0</b><span>/</span><span id="cnt-p">0</span><span class="pct" id="cnt-pct"></span></div>
       <div class="bar"><i id="bar"></i></div>
@@ -580,26 +590,35 @@ function onState() {
    Как в Paper Shaders «Dithering»: упорядоченный дизеринг Байера 4x4, чёрно-белая палитра, крупные пиксели.
    Пиксели вообще не читаются из картинки (поэтому CORS не нужен): складываем фото с матрицей Байера на canvas,
    а порог делает CSS-фильтр grayscale+contrast на самом холсте. Видны боковые поля и просветы между карточками. */
-const PXB = (() => {
-  const cv = $("px"), ctx = cv.getContext("2d"), PS = 4, WGT = 0.62;
+function makePX(cv, PS, FIT) {
+  const ctx = cv.getContext("2d"), WGT = 0.62;
   const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   const tile = document.createElement("canvas"); tile.width = tile.height = 4;
   { const c = tile.getContext("2d"), B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
     for (let i = 0; i < 16; i++) { const v = Math.round(255 * 0.5 * (B[i] + 0.5) / 16); c.fillStyle = "rgb(" + v + "," + v + "," + v + ")"; c.fillRect(i % 4, (i / 4) | 0, 1, 1); } }
   let gw = 0, gh = 0, PC = null, imgs = [], mode = "idle", want = "", target = 0, rev = 0; const t0 = Date.now();
   function size() {
-    const rc = cv.parentElement.getBoundingClientRect(); gw = Math.ceil((rc.width || window.innerWidth || 360) / PS) + 1; gh = Math.ceil((rc.height || window.innerHeight || 640) / PS) + 1;
+    const rc = cv.parentElement.getBoundingClientRect(); if (rc.width < 2 || rc.height < 2) { gw = 0; return; } gw = Math.ceil(rc.width / PS); gh = Math.ceil(rc.height / PS);
     cv.width = gw; cv.height = gh; cv.style.width = gw * PS + "px"; cv.style.height = gh * PS + "px";
     if (imgs.length) build();
   }
   function build() {   // фото (или полосы фото, если на листе несколько) + матрица Байера, целиком, один раз на лист
     PC = document.createElement("canvas"); PC.width = gw; PC.height = gh;
     const c = PC.getContext("2d"); c.fillStyle = "#000"; c.fillRect(0, 0, gw, gh);
-    const n = imgs.length || 1, bh = gh / n;
-    imgs.forEach((im, i) => {
-      const dw = gw, dy = Math.floor(i * bh), dh = Math.ceil(bh) - (n > 1 ? 1 : 0), s = Math.max(dw / im.width, dh / im.height), sw = dw / s, sh = dh / s;
-      c.globalAlpha = WGT; c.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, dy, dw, dh);
-    });
+    const n = imgs.length || 1;
+    if (FIT) {   // карточка: фото целиком (с чёрными полями), несколько фото листа - мозаикой
+      const cols = Math.ceil(Math.sqrt(n * gw / gh)), rows = Math.ceil(n / cols), cw = gw / cols, ch = gh / rows;
+      imgs.forEach((im, i) => {
+        const dx = (i % cols) * cw + (n > 1 ? 1 : 0), dy = Math.floor(i / cols) * ch + (n > 1 ? 1 : 0), dw = cw - (n > 1 ? 2 : 0), dh = ch - (n > 1 ? 2 : 0), s = Math.min(dw / im.width, dh / im.height), w = im.width * s, h = im.height * s;
+        c.globalAlpha = WGT; c.drawImage(im, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+      });
+    } else {
+      const bh = gh / n;
+      imgs.forEach((im, i) => {
+        const dw = gw, dy = Math.floor(i * bh), dh = Math.ceil(bh) - (n > 1 ? 1 : 0), s = Math.max(dw / im.width, dh / im.height), sw = dw / s, sh = dh / s;
+        c.globalAlpha = WGT; c.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, dy, dw, dh);
+      });
+    }
     c.globalAlpha = 1; c.globalCompositeOperation = "lighter"; c.fillStyle = c.createPattern(tile, "repeat"); c.fillRect(0, 0, gw, gh);
   }
   const loadEl = (u) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = u; });
@@ -640,10 +659,18 @@ const PXB = (() => {
       ctx.fillStyle = "#fff"; ctx.fillRect(0, ((Date.now() / 20) | 0) % gh, gw, 1);
     } else if (!reduce) idle((Date.now() - t0) / 1000); else idle(0);
   }
-  size(); window.addEventListener("resize", size);
-  if (tg && tg.onEvent) { try { tg.onEvent("viewportChanged", size); } catch (e) {} }
-  setInterval(frame, 70);
-  return { set, size };
+  size();
+  return { set, size, frame, get ok() { return gw > 0; }, reset() { mode = "idle"; want = ""; imgs = []; PC = null; } };
+}
+const PXB = (() => {
+  const A = makePX($("px"), 4, false), B = makePX($("pxc"), 3, true), mq = window.matchMedia ? matchMedia("(max-width:699px)") : { matches: false };
+  let last = null;
+  const cur = () => (mq.matches ? B : A);
+  const resize = () => { A.size(); B.size(); };
+  window.addEventListener("resize", resize);
+  if (tg && tg.onEvent) { try { tg.onEvent("viewportChanged", resize); } catch (e) {} }
+  setInterval(() => cur().frame(), 90);
+  return { set(k, items, fr, on) { const c = cur(); if (last && last !== c) last.reset(); last = c; if (!c.ok) c.size(); c.set(k, items, fr, on); }, size: resize };
 })();
 
 /* ---------- принтер: пиксельная картинка ---------- */
@@ -908,7 +935,7 @@ function renderOrderBody() {
 async function paintPreview() {
   const d = OR.dr, p = $("paper"); if (!d || !p) return; const my = ++OR.pt;
   const sheets = OR.sheets = planSheets(OR.files, d.c, d.l); if (OR.pg >= sheets.length) OR.pg = Math.max(0, sheets.length - 1);
-  const sh = sheets[OR.pg], pvw = Math.max(120, ($("pv").clientWidth || 260) - 20), maxH = 280;
+  const sh = sheets[OR.pg], pvw = Math.max(120, ($("pv").clientWidth || 260) - 20), maxH = window.innerWidth < 700 ? 340 : 280;
   $("pn").textContent = sheets.length ? (OR.pg + 1) + " из " + sheets.length + " стр" : "";
   document.querySelectorAll('[data-act="pgprev"]').forEach((b) => (b.disabled = OR.pg <= 0)); document.querySelectorAll('[data-act="pgnext"]').forEach((b) => (b.disabled = OR.pg >= sheets.length - 1));
   const fit = (W, H) => { const k = Math.min(pvw / W, maxH / H); p.style.width = Math.round(W * k) + "px"; p.style.height = Math.round(H * k) + "px"; };
