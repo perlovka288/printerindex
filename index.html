@@ -27,16 +27,15 @@ button:focus-visible,input:focus-visible{outline:2px dashed #fff;outline-offset:
 .px{border:2px solid var(--bc,var(--line));clip-path:var(--notch)}
 
 body.light{--bg:#fff;--s1:#f5f5f5;--s2:#ececec;--s3:#e0e0e0;--line:#c9c9c9;--line2:#555;--tx:#000;--mut:#555;--dim:#999;--ok:#0a8a3a;--bad:#c62828;--warn:#9a6b00;--card:rgba(255,255,255,.94);--bar:rgba(255,255,255,.97);--pure:#fff}
-body.light #px{filter:grayscale(1) contrast(1000) invert(1)}
 body.light .printer>svg{filter:invert(1)}
 body.light .paper{box-shadow:4px 4px 0 #bbb,0 0 0 2px #000}
 /* пиксельный фон: фото, которое печатается, вырисовывается точками по бокам */
 .right{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 #px,#pxc{contain:strict;transform:translateZ(0)}
-#px{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.4;transition:opacity .6s steps(6);pointer-events:none}
+#px{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;opacity:.45;transition:opacity .6s steps(6);pointer-events:none}
 body.printing #px{opacity:1}
-#pxc{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;filter:grayscale(1) contrast(1000);opacity:.55;transition:opacity .6s steps(6)}
-body.printing #pxc{opacity:1}body.light #pxc{filter:grayscale(1) contrast(1000) invert(1)}
+#pxc{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;opacity:.6;transition:opacity .6s steps(6)}
+body.printing #pxc{opacity:1}
 .pxc-wrap{display:block;position:relative;height:clamp(230px,min(62vw,50vh),300px);margin:12px 0 4px;border:2px solid var(--line2);background:var(--pure);overflow:hidden}
 .top,main,.tabs{position:relative;z-index:2}
 
@@ -106,6 +105,8 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--tx) 0 8px,transparent 8px 10px);transition:width .9s steps(12)}
 .pc[data-led=ok] .bar i{background:repeating-linear-gradient(90deg,var(--ok) 0 8px,transparent 8px 10px)}
 .pc-sub{text-align:center;color:var(--mut);font-size:14px;min-height:19px}
+.nowline{text-align:center;color:var(--tx);font-size:13.5px;min-height:18px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#v-settings>.btn{position:sticky;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:3}
 .bgrp{display:flex;width:100%;border:2px solid var(--line2);background:var(--s2)}
 .bgrp>button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 4px;font-size:14px;color:var(--tx)}
 .bgrp>button+button{border-left:2px solid var(--line2)}
@@ -116,6 +117,14 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .bgrp>button.danger:not([disabled]){color:var(--bad)}
 .bgrp .bdg{min-width:18px;height:18px;padding:0 4px;background:var(--tx);color:var(--bg);font-size:12px;font-weight:700;display:inline-grid;place-items:center}
 #qa{margin-top:14px}
+.errbox{margin:12px 0 0;padding:12px;border:2px solid var(--bad);background:var(--s2);color:var(--tx)}
+.errbox .eh{display:flex;align-items:flex-start;gap:9px;font-weight:700;color:var(--bad)}
+.errbox .eh .ic{width:20px;height:20px;margin-top:1px;flex:none}
+.errbox .ehint{margin:8px 0 0;color:var(--mut);font-size:14px}
+.errbox .eacts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.errbox .eacts .btn[disabled]{opacity:.45}
+.errbox .okline{color:var(--ok);font-weight:600}
+.pc[data-led=err] .led{background:var(--bad);animation:blink .5s steps(2) infinite}
 
 /* списки */
 .row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin-bottom:10px;background:var(--card);border:2px solid var(--line);clip-path:var(--notch)}
@@ -186,10 +195,11 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
 .ov-top .ib{width:42px;height:42px;display:grid;place-items:center;background:var(--s2);border:2px solid var(--line2)}
 .ov-top .ib .ic{width:14px;height:20px}
 .ov-top .tt{flex:1;min-width:0}.ov-top .tt b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ov-top .tt span{color:var(--mut);font-size:13.5px}
-.ov-body{padding:12px 14px calc(120px + env(safe-area-inset-bottom,0px))}
+.ov-body{padding:12px 14px calc(150px + env(safe-area-inset-bottom,0px))}
 .strip{display:flex;gap:7px;overflow-x:auto;padding:12px 2px 6px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
 .strip .th{width:50px;height:50px;opacity:.5}.strip .th.sel{opacity:1;border-color:var(--tx)}
-.actions{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;gap:10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:2px solid var(--line)}
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;flex-wrap:wrap;gap:8px 10px;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:2px solid var(--line)}
+.actions .sum{flex:0 0 100%;color:var(--mut);font-size:13px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .actions .btn{flex:1}.actions .btn.danger{flex:0 0 auto;width:auto;padding:0 18px}
 .bub{max-width:88%;margin:0 0 8px;padding:9px 12px;background:var(--s2);border:2px solid var(--line)}
 .bub small{display:block;color:var(--dim);font-size:12px;margin-top:3px}
@@ -263,6 +273,8 @@ main{padding:14px var(--rail) calc(96px + env(safe-area-inset-bottom,0px))}
       <div class="cnt" id="cnt"><b id="cnt-k">0</b><span>/</span><span id="cnt-p">0</span><span class="pct" id="cnt-pct"></span></div>
       <div class="bar"><i id="bar"></i></div>
       <div class="pc-sub" id="pc-sub"></div>
+      <div class="nowline" id="nowline"></div>
+      <div class="errbox hide" id="errbox"></div>
       <div class="bgrp" id="qa" role="group" aria-label="Быстрые действия"></div>
     </div>
     <div class="sec lab" id="q-lab">Очередь</div>
@@ -466,6 +478,7 @@ function calcProg(n, recvAt, nowMs) {
       out.fr = Math.min(0.97, el / Math.max(0.01, n.spp || 40)); out.pages = d + out.fr;
     }
   } else if (n.st === "stop" || n.st === "err") { out.pages = d; }
+  else if (n.st === "pause") { out.pages = d; out.cur = P ? Math.min(P - 1, d) : 0; out.fr = 0.4; }   // встали на листе d+1, он «напечатан» наполовину
   if (n.st === "print") {   // шкала только растёт
     if (mono.o !== n.o) { mono.o = n.o; mono.v = 0; }
     if (out.pages < mono.v) { out.pages = Math.min(mono.v, d + 0.97); out.fr = out.pages - d; }
@@ -590,77 +603,102 @@ function onState() {
    Как в Paper Shaders «Dithering»: упорядоченный дизеринг Байера 4x4, чёрно-белая палитра, крупные пиксели.
    Пиксели вообще не читаются из картинки (поэтому CORS не нужен): складываем фото с матрицей Байера на canvas,
    а порог делает CSS-фильтр grayscale+contrast на самом холсте. Видны боковые поля и просветы между карточками. */
+const BLOBS = new Map();   // кэш картинок как blob: так холст остаётся «чистым» и из него можно читать пиксели
+function pxLoad(u) {
+  return new Promise(async (res) => {
+    let src = u;
+    if (BLOBS.has(u)) src = BLOBS.get(u);
+    else { try { const r = await fetch(u, { mode: "cors" }); if (r.ok) { src = URL.createObjectURL(await r.blob()); BLOBS.set(u, src); } } catch (e) {} }
+    const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src;
+  });
+}
+const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+/* Цветной пиксель-арт: фото уменьшается до мелких пикселей, цвета ужимаются до ограниченной палитры
+   с упорядоченным дизерингом Байера (как Dithering в Paper Shaders, только цветной). Если браузер
+   не разрешает читать пиксели, остаётся просто уменьшенное фото с крупными пикселями. */
 function makePX(cv, PS, FIT) {
-  const ctx = cv.getContext("2d"), WGT = 0.62;
+  const ctx = cv.getContext("2d"), LV = 7, AMP = 0.85, SAT = 1.18;
   const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const tile = document.createElement("canvas"); tile.width = tile.height = 4;
-  { const c = tile.getContext("2d"), B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-    for (let i = 0; i < 16; i++) { const v = Math.round(255 * 0.5 * (B[i] + 0.5) / 16); c.fillStyle = "rgb(" + v + "," + v + "," + v + ")"; c.fillRect(i % 4, (i / 4) | 0, 1, 1); } }
-  let gw = 0, gh = 0, PC = null, imgs = [], mode = "idle", want = "", target = 0, rev = 0; const t0 = Date.now();
+  let gw = 0, gh = 0, PC = null, imgs = [], mode = "idle", want = "", target = 0, rev = 0, idleData = null; const t0 = Date.now();
+  const light = () => document.body.classList.contains("light");
   function size() {
-    const rc = cv.parentElement.getBoundingClientRect(); if (rc.width < 2 || rc.height < 2) { gw = 0; return; } gw = Math.ceil(rc.width / PS); gh = Math.ceil(rc.height / PS);
-    cv.width = gw; cv.height = gh; cv.style.width = gw * PS + "px"; cv.style.height = gh * PS + "px";
+    const rc = cv.parentElement.getBoundingClientRect(); if (rc.width < 2 || rc.height < 2) { gw = 0; return; }
+    gw = Math.ceil(rc.width / PS); gh = Math.ceil(rc.height / PS);
+    cv.width = gw; cv.height = gh; cv.style.width = gw * PS + "px"; cv.style.height = gh * PS + "px"; idleData = null;
     if (imgs.length) build();
   }
-  function build() {   // фото (или полосы фото, если на листе несколько) + матрица Байера, целиком, один раз на лист
+  function build() {
     PC = document.createElement("canvas"); PC.width = gw; PC.height = gh;
-    const c = PC.getContext("2d"); c.fillStyle = "#000"; c.fillRect(0, 0, gw, gh);
+    const c = PC.getContext("2d"), bg = light() ? "#fff" : "#000"; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high";
+    c.fillStyle = bg; c.fillRect(0, 0, gw, gh);
     const n = imgs.length || 1;
-    if (FIT) {   // карточка: фото целиком (с чёрными полями), несколько фото листа - мозаикой
-      const cols = Math.ceil(Math.sqrt(n * gw / gh)), rows = Math.ceil(n / cols), cw = gw / cols, ch = gh / rows;
+    if (FIT) {   // карточка: фото целиком, несколько фото листа - мозаикой
+      const cols = Math.ceil(Math.sqrt(n * gw / gh)), rows = Math.ceil(n / cols), cw = gw / cols, ch = gh / rows, g = n > 1 ? 1 : 0;
       imgs.forEach((im, i) => {
-        const dx = (i % cols) * cw + (n > 1 ? 1 : 0), dy = Math.floor(i / cols) * ch + (n > 1 ? 1 : 0), dw = cw - (n > 1 ? 2 : 0), dh = ch - (n > 1 ? 2 : 0), s = Math.min(dw / im.width, dh / im.height), w = im.width * s, h = im.height * s;
-        c.globalAlpha = WGT; c.drawImage(im, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+        const dx = (i % cols) * cw + g, dy = Math.floor(i / cols) * ch + g, dw = cw - 2 * g, dh = ch - 2 * g, s = Math.min(dw / im.width, dh / im.height), w = im.width * s, h = im.height * s;
+        c.drawImage(im, Math.round(dx + (dw - w) / 2), Math.round(dy + (dh - h) / 2), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
       });
     } else {
       const bh = gh / n;
       imgs.forEach((im, i) => {
         const dw = gw, dy = Math.floor(i * bh), dh = Math.ceil(bh) - (n > 1 ? 1 : 0), s = Math.max(dw / im.width, dh / im.height), sw = dw / s, sh = dh / s;
-        c.globalAlpha = WGT; c.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, dy, dw, dh);
+        c.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, 0, dy, dw, dh);
       });
     }
-    c.globalAlpha = 1; c.globalCompositeOperation = "lighter"; c.fillStyle = c.createPattern(tile, "repeat"); c.fillRect(0, 0, gw, gh);
+    try {   // палитра + дизеринг
+      const d = c.getImageData(0, 0, gw, gh), a = d.data, k = (LV - 1) / 255;
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+        const o = (y * gw + x) * 4, b = (B4[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5; let r = a[o], g = a[o + 1], bl = a[o + 2];
+        const m = (r + g + bl) / 3; r = m + (r - m) * SAT; g = m + (g - m) * SAT; bl = m + (bl - m) * SAT;
+        a[o] = Math.max(0, Math.min(255, Math.round(Math.floor(r * k + 0.5 + b * AMP) / k)));
+        a[o + 1] = Math.max(0, Math.min(255, Math.round(Math.floor(g * k + 0.5 + b * AMP) / k)));
+        a[o + 2] = Math.max(0, Math.min(255, Math.round(Math.floor(bl * k + 0.5 + b * AMP) / k)));
+      }
+      c.putImageData(d, 0, 0);
+    } catch (e) { /* холст нельзя читать: оставляем уменьшенное фото без палитры */ }
   }
-  const loadEl = (u) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = u; });
   async function load(k, items) {
     const urls = []; for (const it of items.slice(0, 12)) { const u = await loadFirst(it); if (u) urls.push(u); }
     if (want !== k) return;
-    const els = (await Promise.all(urls.map(loadEl))).filter(Boolean);
+    const els = (await Promise.all(urls.map(pxLoad))).filter(Boolean);
     if (want !== k) return;
     imgs = els; if (els.length) { build(); mode = "photo"; }
   }
-  /* on: печатается страница с фото; fr: какая часть страницы уже «напечатана» (0..1) */
   function set(k, items, fr, on) {
     document.body.classList.toggle("printing", !!on);
     if (!on || !items.length) { if (mode !== "idle") { mode = "idle"; want = ""; imgs = []; PC = null; } return; }
     target = Math.max(0, Math.min(1, fr));
     if (k !== want) { want = k; mode = "load"; rev = 0; PC = null; imgs = []; load(k, items); }
   }
-  function idle(t) {   // в покое: медленно плывущие точечные пятна
-    ctx.globalAlpha = WGT;
-    [[0.2 + 0.12 * Math.sin(t * 0.35), 0.5 + 0.4 * Math.sin(t * 0.21), 0.55], [0.82 + 0.1 * Math.cos(t * 0.3), 0.5 + 0.42 * Math.cos(t * 0.17), 0.5]].forEach((b) => {
-      const x = b[0] * gw, y = b[1] * gh, r = b[2] * Math.max(gw, gh * 0.45), g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, gw, gh);
-    });
-    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = ctx.createPattern(tile, "repeat"); ctx.fillRect(0, 0, gw, gh); ctx.globalCompositeOperation = "source-over";
+  function idle(t) {   // в покое: плывущие точечные пятна
+    if (!idleData || idleData.width !== gw || idleData.height !== gh) idleData = ctx.createImageData(gw, gh);
+    const buf = new Uint32Array(idleData.data.buffer), fg = light() ? 0xff000000 : 0xffffffff, bg = light() ? 0xffffffff : 0xff000000;
+    const bx = [gw * (0.2 + 0.12 * Math.sin(t * 0.35)), gw * (0.82 + 0.1 * Math.cos(t * 0.3))], by = [gh * (0.5 + 0.4 * Math.sin(t * 0.21)), gh * (0.5 + 0.42 * Math.cos(t * 0.17))];
+    const R = Math.max(gw, gh * 0.45) * 0.55, R2 = R * R;
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      let v = 0; for (let i = 0; i < 2; i++) { const dx = x - bx[i], dy = y - by[i], q = 1 - (dx * dx + dy * dy) / R2; if (q > 0) v += q; }
+      buf[y * gw + x] = v * 0.62 > (B4[(y & 3) * 4 + (x & 3)] + 0.5) / 16 ? fg : bg;
+    }
+    ctx.putImageData(idleData, 0, 0);
   }
   function frame() {
     if (document.hidden || !gw) return;
-    ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, gw, gh);
+    const fg = light() ? "#000" : "#fff", bg = light() ? "#fff" : "#000";
     if (mode === "photo" && PC) {
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, gw, gh);
       rev += (target - rev) * 0.3; if (Math.abs(target - rev) < 0.003) rev = target;
       const r = Math.max(0, Math.min(gh, Math.round(rev * gh)));
       if (r > 0) ctx.drawImage(PC, 0, 0, gw, r, 0, 0, gw, r);
-      if (rev < 0.995) {   // печатающая головка: белая строка и россыпь точек над ней
-        ctx.fillStyle = "#fff"; ctx.fillRect(0, Math.min(gh - 1, r), gw, 1);
-        if (!reduce) for (let i = 0; i < gw * 0.4; i++) ctx.fillRect((Math.random() * gw) | 0, Math.max(0, r - 1 - ((Math.random() * 6) | 0)), 1, 1);
+      if (rev < 0.995) {   // печатающая головка: строка и россыпь пикселей над ней
+        ctx.fillStyle = fg; ctx.fillRect(0, Math.min(gh - 1, r), gw, 1);
+        if (!reduce) for (let i = 0; i < gw * 0.25; i++) ctx.fillRect((Math.random() * gw) | 0, Math.max(0, r - 1 - ((Math.random() * 5) | 0)), 1, 1);
       }
-    } else if (mode === "load") {   // фото ещё грузится: горизонтальная «развёртка»
-      ctx.fillStyle = "#fff"; ctx.fillRect(0, ((Date.now() / 20) | 0) % gh, gw, 1);
-    } else if (!reduce) idle((Date.now() - t0) / 1000); else idle(0);
+    } else if (mode === "load") {
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, gw, gh); ctx.fillStyle = fg; ctx.fillRect(0, ((Date.now() / 20) | 0) % gh, gw, 1);
+    } else idle(reduce ? 0 : (Date.now() - t0) / 1000);
   }
   size();
-  return { set, size, frame, get ok() { return gw > 0; }, reset() { mode = "idle"; want = ""; imgs = []; PC = null; } };
+  return { set, size, frame, get ok() { return gw > 0; }, rebuild() { if (imgs.length) build(); }, reset() { mode = "idle"; want = ""; imgs = []; PC = null; } };
 }
 const PXB = (() => {
   const all = [makePX($("px"), 4, false), makePX($("pxc"), 3, true)];   // правая половина (на широком экране) и карточка принтера
@@ -668,7 +706,7 @@ const PXB = (() => {
   window.addEventListener("resize", resize);
   if (tg && tg.onEvent) { try { tg.onEvent("viewportChanged", resize); } catch (e) {} }
   setInterval(() => all.forEach((p) => p.frame()), 90);
-  return { set(k, items, fr, on) { all.forEach((p) => { if (!p.ok) p.size(); p.set(k, items, fr, on); }); }, size: resize };
+  return { rebuild() { all.forEach((p) => p.rebuild()); }, set(k, items, fr, on) { all.forEach((p) => { if (!p.ok) p.size(); p.set(k, items, fr, on); }); }, size: resize };
 })();
 
 /* ---------- принтер: пиксельная картинка ---------- */
@@ -743,6 +781,24 @@ async function swapSheet(key, items, n) {
   void sh.offsetWidth; sh.classList.remove("reset"); swapping = false;
   if (n && n.P) { const c = calcProg(n, recvAt, Date.now()).cur; [1, 2].forEach((d) => pageItems(n, Math.min(n.P - 1, c + d)).forEach((f) => loadFirst(f))); }   // следующие фото грузим заранее
 }
+function sheetNames(n, cur) {
+  const a = activeDoc(n); if (!a || !a.pm || a.pm[cur] == null) return "";
+  const e = a.pm[cur], idx = Array.isArray(e) ? e : [e], names = [];
+  idx.forEach((i) => { const f = a.fs[i]; if (f && f.n && !names.includes(f.n)) names.push(f.n); });
+  return names.slice(0, 2).join(", ") + (names.length > 2 ? " …" : "");
+}
+const ERR_HINT = { paper: "Положи бумагу в лоток подачи (сзади) и поправь направляющие.", jam: "Аккуратно вытащи застрявший лист и закрой крышку.", ink: "Проверь чернила: долей или замени картридж.",
+  door: "Закрой крышку принтера.", bin: "Забери готовые листы из выходного лотка.", offline: "Включи принтер, проверь USB-кабель и питание.", other: "Посмотри на экран принтера и в окно «Принтеры» на ПК." };
+function errHTML(n) {
+  const e = n.er; let h = "";
+  if (e) h += '<div class="eh">' + IC("alert") + "<span>" + esc(e.t) + '</span></div><p class="ehint">' + esc(ERR_HINT[e.k] || ERR_HINT.other) + "</p>";
+  if (n.st === "pause") {
+    const rs = n.rs || (n.d || 0) + 1;
+    if (!e) h += '<div class="okline">Ошибка устранена, можно продолжать.</div>';
+    h += '<p class="ehint">Напечатано ' + (n.d || 0) + " из " + n.P + ". Продолжим с листа " + rs + ' (он допечатается заново).</p><div class="eacts"><button class="btn" data-act="resume"' + (e ? " disabled" : "") + ">" + IC("printer") + "Продолжить с листа " + rs + '</button><button class="btn danger" data-act="stop">' + IC("x") + "Отменить остаток</button></div>";
+  }
+  return h;
+}
 function tick() {
   const pc = $("pc"); if (!pc) return;
   const n = S && S.now;
@@ -756,14 +812,20 @@ function tick() {
     else if (n.st === "render") { led = "busy"; lab = "Подготовка"; title = "Готовлю листы"; sub = "Передано в очередь: " + (n.rd || 0) + " из " + P; stop = true; k = 0; pct = "0%"; }
     else if (n.st === "print") { led = "busy"; lab = "Печать"; title = p.d >= P ? "Завершаю печать" : "Идёт печать"; sub = (who ? who + " · " : "") + "заказ #" + n.o; stop = true; pct = Math.round(pr * 100) + "%"; sheet = true; fr = p.fr; items = pageItems(n, p.cur); key = n.o + ":" + p.cur + ":" + items.length + ":" + (items[0] ? items[0][0] : ""); }
     else if (n.st === "done") { led = "ok"; lab = "Готово"; title = "Готово"; sub = "Напечатано " + P + " из " + P + (who ? " · " + who : ""); pct = "100%"; pr = 1; k = P; sheet = true; fr = 1; items = pageItems(n, Math.max(0, P - 1)); key = n.o + ":" + Math.max(0, P - 1) + ":" + items.length + ":" + (items[0] ? items[0][0] : ""); }
+    else if (n.st === "pause") { led = "err"; lab = "Пауза · ошибка"; title = "Печать приостановлена"; sub = "Напечатано " + (n.d || 0) + " из " + P + " · остановились на листе " + (n.rs || (n.d || 0) + 1); k = n.d || 0; pr = P ? k / P : 0; pct = Math.round(pr * 100) + "%"; stop = true; sheet = true; fr = p.fr; items = pageItems(n, p.cur); key = n.o + ":" + p.cur + ":" + items.length + ":" + (items[0] ? items[0][0] : ""); }
     else if (n.st === "stop") { lab = "Остановлено"; title = "Печать остановлена"; sub = "Напечатано " + (n.d || 0) + " из " + P; k = n.d || 0; pr = P ? k / P : 0; pct = Math.round(pr * 100) + "%"; }
     else { led = "err"; lab = "Ошибка"; title = "Ошибка печати"; sub = "Подробности в чате с ботом"; }
   } else { lab = "На связи · свободен"; title = "Принтер свободен"; sub = S.q && S.q.length ? "Ждут: " + S.q.length : ""; }
+  if (n && !n.busy && n.er && n.st === "print") { led = "err"; lab = "Проблема"; title = "Проблема с принтером"; sub = n.er.t; }
   pc.dataset.led = led; $("pc-lab").textContent = lab; $("pc-title").textContent = title; $("pc-sub").textContent = sub;
   $("cnt-k").textContent = k; $("cnt-p").textContent = P; $("cnt-pct").textContent = pct;
   $("cnt").style.visibility = (n && !n.busy && P > 0 && n.st !== "dl") ? "visible" : "hidden";
   $("bar").style.width = Math.round(pr * 1000) / 10 + "%";
   $("stop").disabled = !stop;
+  { const showNow = n && !n.busy && P > 0 && ["print", "pause", "done"].includes(n.st), cur = showNow ? calcProg(n, recvAt, Date.now()).cur : 0;
+    $("nowline").textContent = showNow ? "Лист " + (cur + 1) + " из " + P + (sheetNames(n, cur) ? " · " + sheetNames(n, cur) : "") : ""; }
+  { const eb = $("errbox"), html = n && !n.busy && (n.er || n.st === "pause") ? errHTML(n) : "";   // что случилось и что делать; после паузы кнопка «Продолжить с листа K»
+    if (eb.dataset.h !== html) { eb.innerHTML = html; eb.dataset.h = html; } eb.classList.toggle("hide", !html); }
   const qn = S && S.q ? S.q.length : 0; $("qn").textContent = String(qn); $("qn").classList.toggle("hide", !qn);
   pc.dataset.on = online ? "1" : "0";
   PXB.set(key, items, fr, sheet && items.length > 0);   // боковые пиксели рисуют то же фото
@@ -912,7 +974,7 @@ function openOrder(id, keep) {
     '<div class="pnav"><button class="ib2" data-act="pgprev" aria-label="Назад">' + IC("left") + '</button><span class="pn" id="pn"></span><button class="ib2" data-act="pgnext" aria-label="Вперёд">' + IC("chev") + "</button></div>" +
     '<div class="strip" id="strip"></div><div id="o-bar"></div>' + (ADMIN ? '<div class="sec lab">Что видит клиент</div><div id="clog"></div>' : "") + "</div>" +
     (q.w ? '<div class="actions"><div class="mut" style="flex:1;text-align:center;padding:14px 0">Заказ ждёт своей очереди на принтер</div></div>'
-          : '<div class="actions"><button class="btn danger" data-act="reject">' + IC("x") + "Отмена</button><button class=\"btn\" data-act=\"print\">" + IC("printer") + "Печать</button></div>");
+          : '<div class="actions"><div class="sum" id="sum"></div><button class="btn danger" data-act="reject">' + IC("x") + 'Отмена</button><button class="btn" id="pbtn" data-act="print">' + IC("printer") + "Печать</button></div>");
   renderOrderBody();
   if (tg && tg.BackButton) { try { tg.BackButton.show(); tg.BackButton.onClick(closeOrder); } catch (e) {} }
 }
@@ -934,6 +996,9 @@ async function paintPreview() {
   const d = OR.dr, p = $("paper"); if (!d || !p) return; const my = ++OR.pt;
   const sheets = OR.sheets = planSheets(OR.files, d.c, d.l); if (OR.pg >= sheets.length) OR.pg = Math.max(0, sheets.length - 1);
   const sh = sheets[OR.pg], pvw = Math.max(120, ($("pv").clientWidth || 260) - 20), maxH = window.innerWidth < 700 ? 340 : 280;
+  { const sm = $("sum"), pb = $("pbtn");
+    if (sm) sm.textContent = [(PAPERS[d.p] || PAPERS.a4)[0], MEDIA[d.m] || d.m, QL[d.q], LAYOUTS[d.l].name, d.c > 1 ? "копий: " + d.c : ""].filter(Boolean).join(" · ");
+    if (pb) pb.innerHTML = IC("printer") + "Печать" + (sheets.length ? " · " + plural(sheets.length, ["лист", "листа", "листов"]) : ""); }
   $("pn").textContent = sheets.length ? (OR.pg + 1) + " из " + sheets.length + " стр" : "";
   document.querySelectorAll('[data-act="pgprev"]').forEach((b) => (b.disabled = OR.pg <= 0)); document.querySelectorAll('[data-act="pgnext"]').forEach((b) => (b.disabled = OR.pg >= sheets.length - 1));
   const fit = (W, H) => { const k = Math.min(pvw / W, maxH / H); p.style.width = Math.round(W * k) + "px"; p.style.height = Math.round(H * k) + "px"; };
@@ -1002,6 +1067,7 @@ function act(name, d) {
     case "copies": if (OR.dr) { OR.dr.c = Math.max(1, Math.min(99, OR.dr.c + +d.d)); OR.pg = 0; renderOrderBody(); } break;
     case "print": if (OR.id && !OR.sending) { OR.sending = true; const x = OR.dr; if (!send({ a: "print", o: OR.id, q: x.q, s: x.s, c: x.c, b: x.b, p: x.p, m: x.m, l: x.l })) OR.sending = false; } break;
     case "reject": if (OR.id) confirmThen("Отклонить заказ? Клиент получит уведомление.", () => send({ a: "reject", o: OR.id })); break;
+    case "resume": send({ a: "resume" }); break;
     case "stop": confirmThen("Остановить печать? Задание будет удалено из очереди принтера.", () => send({ a: "stop" })); break;
     case "person": if (openP.has(d.p)) openP.delete(d.p); else openP.add(d.p); renderHistory(); break;
     case "view": openViewer(d.p, d.o, +d.i); break;
@@ -1029,6 +1095,7 @@ let dark = true; try { dark = localStorage.getItem("theme") !== "light"; } catch
 function setTheme(d) {
   dark = d; document.body.classList.toggle("light", !d); $("theme").innerHTML = d ? SUN : MOON;
   try { localStorage.setItem("theme", d ? "dark" : "light"); } catch (e) {}
+  try { PXB.rebuild(); } catch (e) {}
   try { if (tg) { tg.setHeaderColor && tg.setHeaderColor(d ? "#0a0a0a" : "#ffffff"); tg.setBackgroundColor && tg.setBackgroundColor(d ? "#0a0a0a" : "#ffffff"); } } catch (e) {}
 }
 $("theme").addEventListener("click", () => setTheme(!dark)); setTheme(dark);
@@ -1046,7 +1113,14 @@ if (DEMO) {
   const st = qs.get("demo") || "print";
   S = { v: "v22 демо", r: "admin", pr: "Canon G3010 series", mg: [0, 0, 0, 0], d: { q: "medium", s: true, b: 35, p: "a4", m: "matte", l: "full" }, hd: "", hv: 0, q: [{ o: "101", t: "Андрей", n: 6, th: ["t1"], w: 0 }, { o: "102", t: "Маша", n: 3, th: ["t2"], w: 0 }], h: [], ca: [] };
   DOC = { v: 1, pending: [{ o: "101", u: 1, t: "Андрей", fs, log: [] }, { o: "102", u: 2, t: "Маша", fs: fs.slice(0, 3), log: [] }], active: { o: "100", u: 1, t: "Андрей", fs, pm: [[0, 1, 2, 3, 4, 5, 0, 1, 2], [3, 4, 5]], s: { smart: true, paper: "a4", media: "matte", layout: "wallet" } }, people: {} };
-  if (st !== "idle") S.now = { o: "100", u: 1, t: "Андрей", st: st === "done" ? "done" : "print", P: 2, d: 0, spp: 60, el: 20, th0: "t1" };
+  DOC.active.pm = Array.from({ length: 16 }, (_, i) => (i % 2 ? [3, 4, 5] : [0, 1, 2, 3, 4, 5, 0, 1, 2]));
+  const mkNow = (k) => k === "idle" ? null : k === "pause" ? { o: "100", u: 1, t: "Андрей", st: "pause", P: 16, d: 7, rs: 8, er: { k: "paper", t: "В принтере закончилась бумага" }, spp: 60, th0: "t1" }
+    : k === "fixed" ? { o: "100", u: 1, t: "Андрей", st: "pause", P: 16, d: 7, rs: 8, spp: 60, th0: "t1" }
+    : { o: "100", u: 1, t: "Андрей", st: k === "done" ? "done" : "print", P: 16, d: 7, spp: 60, el: 20, th0: "t1" };
+  S.now = mkNow(st);
+  const bar = document.createElement("div"); bar.style.cssText = "position:fixed;right:6px;bottom:64px;z-index:99;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:70vw";
+  [["print", "Печать"], ["pause", "Ошибка"], ["fixed", "Починил"], ["done", "Готово"], ["idle", "Покой"]].forEach(([k, t]) => { const b = document.createElement("button"); b.textContent = t; b.style.cssText = "padding:6px 8px;border:2px solid var(--tx);background:var(--bg);color:var(--tx);font:12px var(--font)"; b.onclick = () => { S.now = mkNow(k); recvAt = Date.now(); tick(); }; bar.appendChild(b); });
+  document.body.appendChild(bar);
   recvAt = Date.now(); online = true; docVer = 0;
 }
 if (DEMO) { renderAll(); tick(); } else if (VIEWER && TK) { poll(); setInterval(poll, 2000); } else { tick(); }
